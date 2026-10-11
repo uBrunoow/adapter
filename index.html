@@ -1,0 +1,1167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Pattern Adapter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400..700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* ═════════════════════════ Tokens ═════════════════════════
+   Linguagem visual: tudo é encaixe. Cada formato tem um pino próprio
+   (OFX ●, Excel ▲, PDF ⬢, CSV ✚) e o contrato Transaction é o encaixe ■.
+   A fita laranja é um cabo; na parede, os slides são ligados por ele. */
+:root{
+  --wall:#dcd8d2; --white:#fbfbf9; --ink:#17181b; --ink-2:#232529;
+  --mut:#6b6964; --line:rgba(23,24,27,.1);
+  --or:#ff6a13; --or-2:#ff8b3d; --or-txt:#c2410c; --or-soft:#ffe6d6;
+  --green:#22c55e;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --sans:'Inter Tight',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--wall);font-family:var(--sans);-webkit-font-smoothing:antialiased;color:var(--ink)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+
+/* ═════════════════════════ Parede + câmera ═════════════════════════ */
+#wall{position:absolute;left:0;top:0;transform-origin:0 0}
+#wall.flying{will-change:transform}
+#cables{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.frame{position:absolute;width:1920px;height:1080px;border-radius:36px;overflow:hidden;
+  box-shadow:0 2px 4px rgba(60,40,20,.05),0 40px 90px -40px rgba(60,40,20,.35)}
+html.bleed .frame{border-radius:0}
+body.ov .frame{cursor:pointer;transition:box-shadow .3s}
+body.ov .frame:hover{box-shadow:0 0 0 10px var(--or),0 40px 90px -40px rgba(60,40,20,.35)}
+body.ov .frame.cur{box-shadow:0 0 0 10px var(--ink)}
+
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--fg);contain:paint}
+.lt{--bg:var(--white);--fg:var(--ink);--mut:#6b6964;--line:rgba(23,24,27,.1);--dot:rgba(23,24,27,.075);--card:#fff;--well:#f1efeb;--acc:var(--or-txt)}
+.dk{--bg:#111214;--fg:#f1f0ed;--mut:#9d9ea3;--line:rgba(255,255,255,.12);--dot:rgba(255,255,255,.06);--card:#1b1d21;--well:#26282d;--acc:var(--or-2)}
+/* pontos de protoboard */
+.slide::before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--dot) 1.6px,transparent 1.9px);background-size:40px 40px;background-position:20px 20px;
+  -webkit-mask-image:radial-gradient(120% 90% at 50% 40%,#000 40%,transparent 100%);mask-image:radial-gradient(120% 90% at 50% 40%,#000 40%,transparent 100%)}
+.slide>*{z-index:1}
+
+/* cabeçalho e rodapé editoriais */
+.hdr{position:absolute;left:72px;right:72px;top:46px;display:flex;justify-content:space-between;align-items:center;font:500 26px var(--sans);z-index:4}
+.hdr .logo{display:flex;align-items:center;gap:14px}
+.hdr .logo svg{width:52px;height:28px}
+.hdr .yr{color:var(--mut);font-weight:400}
+.ftr{position:absolute;left:72px;right:72px;bottom:42px;display:grid;grid-template-columns:1.1fr 1fr 1fr auto;font:400 23px var(--sans);color:var(--mut);z-index:4}
+.ftr .pg{font:500 23px var(--mono);color:var(--fg);font-variant-numeric:tabular-nums}
+
+/* cabo laranja (a fita da referência) */
+.cable{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;overflow:visible;z-index:0}
+.cable .glow{filter:blur(30px)}
+.cable .core{opacity:.9}
+
+/* tipografia */
+.title{font:500 96px/1.04 var(--sans);letter-spacing:-.04em}
+.title.md{font-size:84px}
+.lead{font:400 36px/1.38 var(--sans);color:var(--mut);letter-spacing:-.005em}
+.kick{font:500 30px var(--sans);color:var(--mut)}
+.mono{font-family:var(--mono)}
+.ln{display:block;overflow:hidden;padding-bottom:.14em;margin-bottom:-.14em}
+.ln>i{display:block;font-style:normal}
+
+/* ═════════════ Peças: poço de ícone, cartões, pílulas, pinos ═════════════ */
+.ic{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.well{flex:none;width:76px;height:76px;border-radius:50%;background:var(--well);display:grid;place-items:center;color:var(--fg);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(0,0,0,.04)}
+.well .ic{width:34px;height:34px}
+.well.hot{background:linear-gradient(140deg,var(--or-2),var(--or));color:var(--ink)}
+.card{position:relative;background:var(--card);border-radius:30px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 2px 6px rgba(60,40,20,.04),0 30px 60px -32px rgba(110,60,20,.3)}
+.glass{background:rgba(255,255,255,.68);-webkit-backdrop-filter:blur(22px) saturate(1.3);backdrop-filter:blur(22px) saturate(1.3);border:1px solid rgba(255,255,255,.95)}
+.dk .card{box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 60px -30px rgba(0,0,0,.6)}
+.pill{position:absolute;display:flex;align-items:center;gap:18px;padding:0 30px;border-radius:999px}
+
+/* pinos de encaixe: plugue (cheio) e soquete (vazado) */
+.pt{position:absolute;width:34px;height:34px;translate:-50% -50%;z-index:3;pointer-events:none}
+.pt svg,.gl svg{display:block;width:100%;height:100%;overflow:visible}
+.pt .plug{fill:var(--ink)}
+.pt .plug.sq{fill:var(--or)}
+.pt .sock{fill:var(--bg);stroke:var(--ink);stroke-width:2.6}
+.pt .sock.sq{stroke:var(--or)}
+.dk .pt .plug{fill:#f1f0ed}.dk .pt .plug.sq{fill:var(--or)}
+.dk .pt .sock{fill:var(--card);stroke:#f1f0ed}.dk .pt .sock.sq{stroke:var(--or)}
+.gl{flex:none;display:inline-block;width:.78em;height:.78em;vertical-align:-.06em}
+.gl .plug{fill:currentColor}.gl .plug.sq{fill:var(--or)}
+
+/* fios */
+.wires{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none;overflow:visible;z-index:1}
+.wires .w{fill:none;stroke:#c9c5bf;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.wires .w.o{stroke:var(--or)}
+.dk .wires .w{stroke:#4a4c52}.dk .wires .w.o{stroke:var(--or)}
+.wires .pin{fill:var(--bg);stroke:#b5b0a9;stroke-width:3}
+
+/* rastreador dos 5 passos: um cabo com 5 pinos */
+.track{display:flex;align-items:center;gap:24px;font:500 26px var(--sans);color:var(--mut);height:40px}
+.track .rail{position:relative;width:300px;height:22px}
+.track .rail::before{content:"";position:absolute;left:8px;right:8px;top:10px;height:2px;background:var(--line)}
+.track .rail b{position:absolute;left:8px;top:10px;height:2px;background:var(--or);transform-origin:left}
+.track .rail i{position:absolute;top:2px;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:var(--bg);border:2.5px solid #c9c5bf}
+.track .rail i.done{background:var(--ink);border-color:var(--ink)}
+.track .rail i.now{background:var(--or);border-color:var(--or);border-radius:4px;transform:rotate(0deg)}
+
+/* ═════════════ Código (painéis claros; terminal escuro) ═════════════ */
+.code{position:relative;background:#f3f2ee;color:#1d1f23;border-radius:28px;overflow:hidden;border:1px solid rgba(23,24,27,.07);
+  --lh:46px;--fs:27px;--pad:24px}
+.code .bar{height:64px;display:flex;align-items:center;gap:14px;padding:0 26px;border-bottom:1px solid rgba(23,24,27,.07);font:400 23px var(--mono);color:#6b6964}
+.code .bar .fi{width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--ink)}
+.code .bar .fi .ic{width:18px;height:18px}
+.code .bar .sig{margin-left:auto;display:flex;align-items:center;gap:10px;font:500 24px var(--mono);color:var(--ink)}
+.code pre{position:relative;z-index:1;margin:0;padding:var(--pad) 30px;font:400 var(--fs)/var(--lh) var(--mono);white-space:pre}
+.code .hl{position:absolute;left:12px;right:12px;z-index:0;border-radius:10px;top:calc(64px + var(--pad) + (var(--l) - 1)*var(--lh));height:calc(var(--c,1)*var(--lh));background:rgba(255,106,19,.14)}
+.code .k{color:#c2410c}.code .t{color:#2556c9}.code .s{color:#157a3c}.code .n{color:#9a5b00}.code .c{color:#8b8d92;font-style:italic}
+.code.sm{--fs:23px;--lh:38px;--pad:22px}
+.code.dark{background:#141518;color:#e8e6df;border-color:rgba(255,255,255,.06)}
+.code.dark .bar{color:#9aa1ad;border-color:rgba(255,255,255,.08)}
+.code.dark .bar .fi{background:#26282d;color:#e8e6df}
+.code.dark .k{color:#ff9166}.code.dark .t{color:#8fb4ff}.code.dark .s{color:#a5d68a}.code.dark .n{color:#f6c177}.code.dark .c{color:#6f7785}
+
+/* ═════════════ Entradas ═════════════ */
+@keyframes rise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+@keyframes fromR{from{opacity:0;transform:translateX(80px)}to{opacity:1;transform:none}}
+@keyframes fromL{from{opacity:0;transform:translateX(-80px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+@keyframes lineup{from{transform:translateY(108%)}to{transform:none}}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes plugIn{0%{opacity:0;transform:translateX(-26px)}60%{opacity:1}100%{opacity:1;transform:none}}
+.enter .a{animation:rise .9s var(--ease) both;animation-delay:calc(var(--b,0ms) + 220ms + var(--i,0)*90ms)}
+.enter .a.fr{animation-name:fromR}.enter .a.fl{animation-name:fromL}.enter .a.pp{animation-name:pop}.enter .a.fd{animation-name:fade}
+.enter .ln>i{animation:lineup 1s var(--ease) both;animation-delay:calc(var(--b,0ms) + var(--j,0)*100ms)}
+.draw{stroke-dasharray:1;stroke-dashoffset:0}
+.enter .draw{animation:draw 1.2s var(--ease) both;animation-delay:calc(var(--b,0ms) + 450ms + var(--i,0)*140ms)}
+.enter .cable .draw{animation-duration:1.8s;animation-delay:calc(var(--b,0ms) + 100ms)}
+.enter .track .rail b{animation:grow 1s var(--ease) both;animation-delay:calc(var(--b,0ms) + 300ms)}
+.enter .pt.in{animation:plugIn .7s var(--ease) both;animation-delay:calc(var(--b,0ms) + 900ms + var(--i,0)*140ms)}
+
+/* revelação por passos (→) */
+.st{opacity:0;transform:translateY(20px);transition:opacity .5s var(--ease),transform .6s var(--ease)}
+.st.on{opacity:1;transform:none}
+.code .hl.st{transform:none}
+
+/* ═════════════ 01 · Capa ═════════════ */
+#s1 .kick{position:absolute;left:120px;top:222px}
+#s1 .giant{position:absolute;left:108px;top:262px;font:500 232px/1 var(--sans);letter-spacing:-.06em;white-space:nowrap}
+#s1 .giant.ln{padding-bottom:.04em;margin-bottom:0}
+#s1 h2{position:absolute;left:120px;top:540px;width:860px;font:500 46px/1.18 var(--sans);letter-spacing:-.025em}
+#s1 .acts{position:absolute;left:120px;top:770px;display:flex;align-items:center;gap:30px}
+#s1 .btn{display:inline-flex;align-items:center;gap:16px;height:80px;padding:0 14px 0 38px;border-radius:999px;background:var(--ink);color:#fff;font:500 30px var(--sans);text-decoration:none;transition:transform .3s var(--ease)}
+#s1 .btn:hover{transform:translateY(-3px)}
+#s1 .btn span{width:56px;height:56px;border-radius:50%;background:var(--or);display:grid;place-items:center;color:var(--ink)}
+#s1 .by{font:500 30px var(--sans);color:var(--mut)}
+#s1 .chip{height:96px;width:270px;left:1080px;justify-content:center;font:500 28px var(--mono)}
+#s1 .adp{position:absolute;left:1430px;top:236px;width:180px;height:384px;border-radius:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:600 28px var(--sans)}
+#s1 .adp .well{width:84px;height:84px}
+#s1 .adp small{font:400 22px var(--mono);color:var(--mut)}
+#s1 .out{left:1300px;top:744px;height:104px;width:440px;justify-content:center;background:var(--ink);color:#fff;font:500 32px var(--mono)}
+#s1 .out b{width:16px;height:16px;border-radius:50%;background:var(--green)}
+
+/* ═════════════ 02 · Três jeitos ═════════════ */
+#s2 .left{position:absolute;left:120px;top:200px;width:740px}
+#s2 .left .lead{margin-top:40px;width:640px}
+#s2 .legend{margin-top:48px;display:flex;gap:28px;font:500 26px var(--sans);color:var(--mut)}
+#s2 .legend span{display:flex;align-items:center;gap:10px}
+#s2 .legend .gl{width:24px;height:24px;color:var(--ink)}
+#s2 .rows{position:absolute;left:960px;top:170px;width:780px;display:flex;flex-direction:column;gap:26px}
+#s2 .src{display:flex;align-items:center;gap:30px;padding:30px 40px 30px 30px;border-radius:30px}
+#s2 .src .fn{font:400 24px var(--mono);color:var(--mut)}
+#s2 .src .val{margin-top:6px;font:600 44px/1.15 var(--mono);letter-spacing:-.02em;white-space:nowrap}
+#s2 .src .val u{text-decoration:none;background:linear-gradient(transparent 60%,rgba(255,106,19,.3) 60%)}
+#s2 .src .cap{margin-top:8px;font:400 27px var(--sans);color:var(--mut)}
+#s2 .src .pt{left:100%;top:50%}
+
+/* ═════════════ 03 · Conceito ═════════════ */
+#s3 .kick{position:absolute;left:120px;top:160px;color:var(--acc)}
+#s3 h1{position:absolute;left:120px;top:208px;width:1600px;font:500 84px/1.06 var(--sans);letter-spacing:-.04em}
+#s3 .nd{position:absolute;top:600px;width:330px;height:300px;padding:30px;border-radius:30px}
+#s3 .nd .well{width:64px;height:64px}
+#s3 .nd .well .ic{width:28px;height:28px}
+#s3 .nd h3{margin-top:22px;font:500 44px var(--sans);letter-spacing:-.03em}
+#s3 .nd p{margin-top:12px;font:400 23px/1.4 var(--mono);color:var(--mut)}
+#s3 .nd.ad{background:linear-gradient(150deg,var(--or-2),var(--or));color:var(--ink);top:572px;height:356px}
+#s3 .nd.ad p{color:rgba(23,24,27,.78)}
+#s3 .nd.ad .well{background:rgba(255,255,255,.35)}
+#s3 .nd.ae p{font:400 27px/1.35 var(--sans)}
+#s3 .lab{position:absolute;top:712px;font:500 25px var(--sans);color:var(--mut);transform:translateX(-50%);white-space:nowrap}
+
+/* ═════════════ 04 · Três entradas ═════════════ */
+#s4 h1{position:absolute;left:120px;top:150px}
+#s4 .ins{position:absolute;left:120px;top:304px;width:600px;display:flex;flex-direction:column;gap:26px}
+#s4 .src{padding:24px 30px;border-radius:26px;display:flex;gap:24px;align-items:center}
+#s4 .src .well{width:64px;height:64px}
+#s4 .src .well .ic{width:28px;height:28px}
+#s4 .src .fn{font:400 22px var(--mono);color:var(--mut)}
+#s4 .src .val{margin-top:4px;font:500 24px/1.4 var(--mono);white-space:pre}
+#s4 .src .pt{left:100%;top:50%}
+#s4 .mini{position:absolute;left:800px;width:120px;height:64px;border-radius:999px;display:grid;place-items:center;font:600 20px var(--sans);color:var(--or-txt)}
+#s4 .mini .pt{top:50%}
+#s4 .code{position:absolute;left:1040px;top:356px;width:760px;--fs:30px;--lh:48px}
+#s4 .code .pt{left:0;top:50%}
+#s4 .note{position:absolute;left:1040px;top:780px;width:760px;font:400 30px/1.4 var(--sans);color:var(--mut)}
+#s4 .note b{color:var(--fg);font-weight:600;font-family:var(--mono);font-size:.92em}
+
+/* ═════════════ 05–09 · Código ═════════════ */
+.col{position:absolute;left:120px;top:150px;width:660px}
+.col .title{margin-top:34px}
+.col .lead{margin-top:32px}
+.callout{margin-top:40px;display:flex;gap:22px;align-items:center;padding:24px 30px 24px 24px;border-radius:999px;background:var(--ink);color:#f1f0ed;font:500 30px/1.25 var(--sans)}
+.callout .well{width:60px;height:60px;background:var(--or);color:var(--ink)}
+.callout .well .ic{width:26px;height:26px}
+.head{position:absolute;left:120px;top:140px}
+.head .title{margin-top:16px;font-size:84px}
+#s5 .code{position:absolute;left:860px;width:940px}
+#s5 #c1{top:150px}#s5 #c2{top:704px}
+#s5 .tagt{padding:6px 16px;border-radius:99px;background:var(--or);color:var(--ink);font:600 20px var(--sans)}
+.split{position:absolute;left:120px;--lh:46px;--pad:22px}
+#s6 .split{top:310px}
+#s6 .code{width:1080px}
+.rail2{position:absolute;left:1170px;top:0;width:510px}
+.map{position:absolute;left:0;height:42px;display:flex;align-items:center;padding:0 20px;border-radius:999px;font:500 25px var(--mono);white-space:nowrap;
+  top:calc(64px + var(--pad) + (var(--l) - 1)*var(--lh) + 2px)}
+.map::before{content:"";position:absolute;right:100%;top:50%;width:90px;height:0;border-top:2.5px dashed #c9c5bf;transition:border-color .4s}
+.map.on::before{border-top:2.5px solid var(--or)}
+.map b{font-weight:700}.map i{font-style:normal;color:var(--or);margin:0 12px}.map em{font-style:normal;color:var(--or-txt);font-weight:600}
+.map.st{transform:translateX(26px)}.map.st.on{transform:none}
+#s7 .code{position:absolute;top:310px;width:828px}
+#s7 #ex{left:120px}#s7 #pf{left:972px}
+#s7 .join{position:absolute;left:120px;top:900px;width:1680px;height:64px;border-radius:999px;background:linear-gradient(90deg,var(--or-2),var(--or));display:flex;align-items:center;justify-content:center;gap:16px;font:600 28px var(--mono);color:var(--ink)}
+#s8 .code{position:absolute;left:780px;top:150px;width:1020px;--fs:27px;--lh:44px}
+#s8 .nt{position:absolute;left:120px;top:690px;width:600px;padding:34px 38px;border-radius:30px;font:500 36px/1.18 var(--sans);letter-spacing:-.02em}
+#s8 .nt small{display:block;margin-top:10px;font:400 27px var(--sans);color:var(--mut);letter-spacing:0}
+#s9 .code{position:absolute;width:880px}
+#s9 #c1{left:120px;top:310px}
+#s9 #c2{left:1000px;top:310px}
+#s9 #c3{left:1000px;top:632px;--pad:18px}
+#s9 .tn{position:absolute;left:120px;top:826px;width:880px;display:flex;gap:22px;align-items:center;padding:22px 30px 22px 22px;border-radius:999px;font:400 27px/1.35 var(--sans);color:var(--mut)}
+#s9 .tn .well{width:60px;height:60px}
+#s9 .tn .well .ic{width:26px;height:26px}
+.term{position:relative;z-index:1;padding:18px 30px;font:400 23px/38px var(--mono);color:#e8e6df}
+.term .idle{position:absolute;left:30px;top:18px;color:#6f7785;opacity:0;transition:opacity .3s}
+.term .idle i{display:inline-block;width:.6em;height:1.1em;vertical-align:-.2em;background:#e8e6df;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.term:not(:has(.cmd.on)) .idle{opacity:1}
+.cmd .ty{display:inline-block;vertical-align:top;overflow:hidden;white-space:nowrap;width:0}
+.cmd.on .ty{animation:type .9s steps(var(--n),end) forwards}
+@keyframes type{to{width:calc(var(--n)*1ch)}}
+.cmd .res{display:block;height:38px;opacity:0}
+.cmd.on .res{animation:fade .4s ease 1s forwards}
+.res.ok{color:#7ee2a0}.res.no{color:#ff8c7e}
+.cmd .pr{color:#6f7785;opacity:0}.cmd.on .pr{opacity:1}
+.st.cmd{transform:none;opacity:1;transition:none}
+
+/* ═════════════ 10 · Fluxo ═════════════ */
+#s10 .panel{position:absolute;left:120px;top:140px;width:880px;height:830px;border-radius:34px;background:#f1efeb;border:1px solid rgba(23,24,27,.06)}
+#s10 .nd{position:absolute;translate:-50% -50%;height:68px;display:flex;align-items:center;gap:14px;padding:0 26px 0 12px;border-radius:999px;background:#fff;font:500 25px var(--sans);white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,.04),0 14px 30px -16px rgba(80,40,10,.3)}
+#s10 .nd .n{width:44px;height:44px;border-radius:50%;background:var(--well);display:grid;place-items:center;font:600 20px var(--mono)}
+#s10 .nd.f{padding:0 22px;font:500 22px var(--mono);gap:10px;height:56px}
+#s10 .nd.f .gl{width:20px;height:20px}
+#s10 .nd.hot{background:linear-gradient(140deg,var(--or-2),var(--or))}
+#s10 .nd.hot .n{background:rgba(255,255,255,.4)}
+#s10 .nd .sig{display:flex;gap:6px;align-items:center;margin-left:6px;font:500 20px var(--mono)}
+#s10 .nd .sig .gl{width:18px;height:18px}
+#s10 .r{position:absolute;left:1100px;top:140px;width:700px}
+#s10 .r .title{font-size:76px}
+#s10 .cards{position:absolute;left:1100px;top:362px;width:700px;display:flex;flex-direction:column;gap:20px}
+#s10 .cards .card{display:flex;gap:24px;padding:22px 30px 22px 22px;align-items:flex-start;border-radius:28px}
+#s10 .cards .well{width:64px;height:64px}
+#s10 .cards .well .ic{width:28px;height:28px}
+#s10 .cards h4{font:600 28px var(--mono);letter-spacing:-.02em}
+#s10 .cards p{margin-top:6px;font:400 25px/1.3 var(--sans);color:var(--mut)}
+#s10 .cards small{display:block;margin-top:8px;font:400 20px var(--mono);color:#8a8781}
+#s10 .cards .hot{outline:2.5px solid var(--or)}
+#s10 .cards .hot h4{color:var(--or-txt)}
+
+/* ═════════════ 11 · Não resolve ═════════════ */
+#s11 .l{position:absolute;left:120px;top:150px;width:660px}
+#s11 .final{position:absolute;left:120px;top:700px;width:600px;padding:38px 42px;border-radius:30px;background:linear-gradient(150deg,var(--or-2),var(--or));color:var(--ink);font:500 52px/1.06 var(--sans);letter-spacing:-.035em}
+#s11 .big{position:absolute;left:860px;top:150px;width:940px;display:flex;gap:28px;align-items:center;padding:30px 40px 30px 30px;border-radius:30px;background:var(--ink);color:#f1f0ed}
+#s11 .big .well{background:var(--or);color:var(--ink)}
+#s11 .big h3{font:500 40px/1.1 var(--sans);letter-spacing:-.025em}
+#s11 .big p{margin-top:8px;font:400 27px/1.35 var(--sans);color:#b8b9bd}
+#s11 .grid{position:absolute;left:860px;top:350px;width:940px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+#s11 .grid .card{display:flex;gap:20px;align-items:flex-start;padding:24px 26px;border-radius:28px}
+#s11 .grid .well{width:60px;height:60px}
+#s11 .grid .well .ic{width:26px;height:26px}
+#s11 .grid h3{margin-top:4px;font:600 31px var(--sans);letter-spacing:-.02em}
+#s11 .grid p{margin-top:6px;font:400 26px/1.32 var(--sans);color:var(--mut)}
+#s11 .grid .card:nth-child(1){grid-row:span 1}
+
+/* ═════════════ 12 · Três padrões ═════════════ */
+#s12 h1{position:absolute;left:120px;top:150px;font-size:76px}
+#s12 .rows{position:absolute;left:120px;top:300px;width:1680px;display:flex;flex-direction:column;gap:22px}
+#s12 .row{display:grid;grid-template-columns:110px 760px 1fr;align-items:center;gap:40px;height:200px;padding:0 50px 0 46px;border-radius:34px}
+#s12 .row .well{width:96px;height:96px}
+#s12 .row .well .ic{width:42px;height:42px}
+#s12 .row h2{font:500 140px/1 var(--sans);letter-spacing:-.055em}
+#s12 .row p{font:500 36px/1.2 var(--sans);letter-spacing:-.015em}
+#s12 .row small{display:block;margin-top:10px;font:400 26px var(--sans);color:var(--mut)}
+#s12 .row.hot{background:linear-gradient(120deg,var(--or-2),var(--or));color:var(--ink)}
+#s12 .row.hot small{color:rgba(23,24,27,.72)}
+#s12 .row.hot .well{background:rgba(255,255,255,.4)}
+
+/* ═════════════ 13 · Demo ═════════════ */
+#s13 h1{position:absolute;left:120px;top:150px}
+#s13 .vid{position:absolute;left:120px;top:300px;width:1080px}
+#s13 .vframe{position:relative;height:580px;background:radial-gradient(60% 60% at 50% 55%,rgba(255,106,19,.16),transparent 70%),#0b0c0e;display:flex;align-items:center;justify-content:center;color:var(--mut);font:400 28px var(--sans);cursor:pointer}
+#s13 .vframe video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none}
+#s13 .vframe.live video{display:block}#s13 .vframe.live .ph{display:none}
+#s13 .ph{display:flex;flex-direction:column;align-items:center;gap:24px}
+#s13 .play{width:120px;height:120px;border-radius:50%;background:linear-gradient(140deg,var(--or-2),var(--or));display:grid;place-items:center;transition:transform .4s var(--ease)}
+#s13 .vframe:hover .play{transform:scale(1.08)}
+#s13 .road{position:absolute;left:1290px;top:300px;width:510px}
+#s13 .road h3{font:500 30px var(--sans);color:var(--acc);margin-bottom:20px}
+#s13 .road li{list-style:none;display:flex;gap:22px;align-items:center;margin-bottom:16px;padding:18px 26px 18px 18px;border-radius:999px;font:500 29px/1.2 var(--sans)}
+#s13 .road li b{flex:none;width:52px;height:52px;border-radius:50%;background:var(--well);display:grid;place-items:center;font:500 22px var(--mono);color:var(--acc)}
+
+/* ═════════════ 14 · Fecho ═════════════ */
+#s14 h1{position:absolute;left:120px;top:170px;width:1700px;font:500 124px/1.02 var(--sans);letter-spacing:-.05em}
+#s14 .lead{position:absolute;left:120px;top:460px;width:1000px}
+#s14 .q{position:absolute;left:120px;top:660px;display:flex;gap:18px}
+#s14 .q span{height:84px;padding:0 40px;border-radius:999px;display:grid;place-items:center;font:500 36px var(--sans)}
+#s14 .q span:first-child{background:var(--ink);color:#fff}
+#s14 .refs{position:absolute;left:120px;top:800px;display:flex;gap:12px;flex-wrap:wrap;width:1000px}
+#s14 .refs span{padding:12px 22px;border-radius:999px;font:500 24px var(--sans)}
+#s14 .by{position:absolute;left:120px;top:900px;font:400 26px var(--sans);color:var(--mut)}
+#s14 .newf{position:absolute;left:1210px;top:560px;width:600px;height:400px}
+#s14 .newf .pill{height:84px}
+#s14 .newf .cap{position:absolute;left:0;top:-54px;font:500 24px var(--sans);color:var(--mut)}
+
+/* ═════════════ Interface do apresentador ═════════════ */
+#bar{position:fixed;left:0;bottom:0;height:4px;width:100%;z-index:50;background:rgba(23,24,27,.08)}
+#bar i{display:block;height:100%;width:0;background:var(--or);transition:width .8s var(--ease)}
+#dock{position:fixed;left:50%;bottom:22px;z-index:60;transform:translateX(-50%);display:flex;gap:4px;padding:6px;border-radius:999px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 0 0 1px rgba(23,24,27,.06),0 20px 50px -10px rgba(60,40,20,.35);transition:opacity .35s,transform .35s var(--ease)}
+.idle #dock{opacity:0;transform:translate(-50%,16px);pointer-events:none}
+.idle,.idle *{cursor:none!important}
+#dock button{position:relative;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#3a3b3f;transition:background .2s}
+#dock button:hover{background:rgba(23,24,27,.07);color:#000}
+#dock button svg{width:21px;height:21px}
+#dock .sep{width:1px;margin:10px 4px;background:rgba(23,24,27,.12)}
+#dock .pos{display:grid;place-items:center;min-width:80px;font:500 16px var(--mono);font-variant-numeric:tabular-nums}
+#dock button[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:58px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:7px 12px;border-radius:999px;background:var(--ink);color:#fff;font:500 14px var(--sans)}
+#dock button:focus-visible,.edge:focus-visible,#pal input:focus-visible{outline:2px solid var(--or);outline-offset:2px}
+.edge{position:fixed;top:0;bottom:0;width:9vw;z-index:40;opacity:0;display:grid;place-items:center;color:var(--ink);transition:opacity .25s}
+.edge:hover{opacity:1}.edge.l{left:0}.edge.r{right:0}
+.edge span{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.85);display:grid;place-items:center;box-shadow:0 10px 30px -10px rgba(60,40,20,.4)}
+.edge svg{width:24px;height:24px}
+.idle .edge,body.ov .edge{display:none}
+
+#notes{position:fixed;left:16px;right:16px;bottom:16px;z-index:55;padding:24px 32px 92px;border-radius:28px;background:rgba(23,24,27,.94);color:#f1f0ed;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);transform:translateY(120%);transition:transform .5s var(--ease);display:grid;grid-template-columns:1fr 240px;gap:40px}
+body.shownotes #notes{transform:none}
+#notes h5{font:500 15px var(--sans);color:#a2a3a8;margin-bottom:8px}
+#notes p{font:400 24px/1.42 var(--sans);max-width:1200px}
+#notes .nx{margin-top:10px;color:#a2a3a8;font-size:17px}
+#notes .tm{text-align:right;font:500 50px var(--mono);font-variant-numeric:tabular-nums;color:var(--or-2)}
+#notes .tm small{display:block;font:500 15px var(--sans);color:#a2a3a8}
+
+#pal{position:fixed;inset:0;z-index:90;display:none;align-items:flex-start;justify-content:center;padding-top:14vh;background:rgba(60,50,40,.25);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#pal.open{display:flex;animation:fade .2s}
+#pal .box{width:min(720px,92vw);border-radius:26px;background:rgba(255,255,255,.94);box-shadow:0 0 0 1px rgba(23,24,27,.06),0 40px 100px -20px rgba(60,40,20,.45);overflow:hidden}
+#pal input{width:100%;padding:22px 26px;background:none;border:0;border-bottom:1px solid rgba(23,24,27,.08);font:500 22px var(--sans);color:var(--ink);outline:none}
+#pal ul{list-style:none;max-height:min(52vh,460px);overflow:auto;padding:8px}
+#pal li{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 16px;border-radius:14px;font:500 18px var(--sans);color:#3a3b3f;cursor:pointer}
+#pal li.sel{background:var(--or-soft);color:var(--ink)}
+#pal kbd,#help kbd{font:500 14px var(--mono);padding:3px 9px;border-radius:8px;background:rgba(23,24,27,.07);color:#3a3b3f}
+#pal .empty{padding:24px;color:var(--mut);font:400 17px var(--sans)}
+#pal .foot2{display:flex;gap:18px;padding:12px 20px;border-top:1px solid rgba(23,24,27,.06);font:400 14px var(--sans);color:var(--mut)}
+#help{position:fixed;inset:0;z-index:95;display:none;place-items:center;background:rgba(60,50,40,.25);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#help.open{display:grid}
+#help .box{width:min(880px,92vw);padding:34px 40px;border-radius:30px;background:#fff;box-shadow:0 40px 100px -20px rgba(60,40,20,.45)}
+#help h2{font:500 30px var(--sans);letter-spacing:-.02em;margin-bottom:22px}
+#help dl{display:grid;grid-template-columns:1fr 1fr;gap:6px 44px}
+#help dl div{display:flex;justify-content:space-between;gap:12px;font:400 17px var(--sans);color:#3a3b3f;padding:8px 0;border-bottom:1px solid rgba(23,24,27,.07)}
+#help dl div span{display:flex;gap:6px}
+#toast{position:fixed;left:50%;top:24px;z-index:99;transform:translate(-50%,-20px);opacity:0;padding:14px 24px;border-radius:999px;background:var(--ink);color:#fff;font:500 17px var(--sans);transition:opacity .3s,transform .4s var(--ease);pointer-events:none;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#blank{position:fixed;inset:0;z-index:80;background:#000;display:none}
+#blank.on{display:block}
+#laser{position:fixed;z-index:70;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;display:none;background:radial-gradient(circle,#fff 0 18%,#ff4d0a 22%,rgba(255,77,10,.45) 55%,transparent 72%);filter:drop-shadow(0 0 10px #ff4d0a)}
+body.laser #laser{display:block}
+body.laser,body.laser *{cursor:none!important}
+.sr{position:absolute;left:-9999px}
+
+/* ═════════════ PDF / impressão ═════════════ */
+@page{size:1920px 1080px;margin:0}
+@media print{.ui{display:none!important}}
+html.pdf,html.pdf body{background:#fff;overflow:visible;height:auto}
+html.pdf #wall{position:static;transform:none!important;width:1920px!important;height:auto!important}
+html.pdf #cables{display:none}
+html.pdf .frame{position:relative;left:auto!important;top:auto!important;border-radius:0;box-shadow:none;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+html.pdf .frame:last-of-type{break-after:auto;page-break-after:auto}
+html.pdf *{animation:none!important;transition:none!important}
+html.pdf .st,html.pdf .map.st{opacity:1!important;transform:none!important}
+html.pdf .map::before{border-top:2.5px solid var(--or)}
+html.pdf .cmd .ty{width:calc(var(--n)*1ch)}html.pdf .cmd .res,html.pdf .cmd .pr{opacity:1}
+html.pdf .term .idle,html.pdf .pk{display:none}
+html.pdf .ui{display:none!important}
+body.ov .term .idle{display:none}
+
+@media (prefers-reduced-motion:reduce){
+  .enter .a,.enter .ln>i,.enter .draw,.enter .track .rail b,.enter .pt.in{animation:none!important}
+  .st,.map::before{transition:none}
+  .pk{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ícones (traço) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gOr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb37d"/><stop offset=".55" stop-color="#ff7a24"/><stop offset="1" stop-color="#ff5a05"/></linearGradient>
+  </defs>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 9.5l9-5 9 5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></symbol>
+  <symbol id="i-sheet" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M9.5 13h6M9.5 16.5h4"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M4.5 15v4.5h15V15"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H15a3 3 0 010 6H9a3 3 0 000 6h6.5"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5M6.5 8h11v3a5.5 5.5 0 01-11 0zM12 16.5V21"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8"/></symbol>
+  <symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="5.5" ry="2.5"/><path d="M3.5 7v4c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5V7"/><path d="M9.5 15.5c.6 1.2 2.9 2 5.5 2 3 0 5.5-1.1 5.5-2.5v-4c0-1.2-1.8-2.2-4.3-2.4"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 015.5 4H8M16 4h2.5A1.5 1.5 0 0120 5.5V8M20 16v2.5a1.5 1.5 0 01-1.5 1.5H16M8 20H5.5A1.5 1.5 0 014 18.5V16M8 12h8"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4.5M12 17.2v.1"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5l7.5 3v5.5c0 4.4-3.2 7.6-7.5 8.5-4.3-.9-7.5-4.1-7.5-8.5V6.5z"/><path d="M9 12l2.2 2.2L15.5 10"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 00-1.5-1.5H6A1.5 1.5 0 004.5 6v8A1.5 1.5 0 006 15.5h2.5"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 6.5A1.5 1.5 0 015 5h4.5l2 2.5H19a1.5 1.5 0 011.5 1.5v9A1.5 1.5 0 0119 19.5H5A1.5 1.5 0 013.5 18z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></symbol>
+  <symbol id="i-factory" viewBox="0 0 24 24"><path d="M3.5 20V10l5 3V10l5 3V6.5h7V20z"/><path d="M3 20h18"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14M14.5 4.5L18 8l-3.5 3.5M20 16H6M9.5 12.5L6 16l3.5 3.5"/></symbol>
+  <symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 9.5l3 2.5-3 2.5M12 15h5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></symbol>
+</svg>
+
+<div id="wall">
+<svg id="cables" aria-hidden="true"></svg>
+
+<!-- ═════════════ 01 · Capa ═════════════ -->
+<section class="slide lt" id="s1" data-sec="Abertura" data-cable="M780 1180 C 980 980, 1080 860, 1240 700 S 1600 300, 2060 140" data-title="Adapter"
+ data-notes="Apresentação: o padrão Adapter aplicado a um importador de transações financeiras que recebe arquivos OFX, Excel e PDF. O diagrama resume a ideia: três arquivos com encaixes diferentes passam pelo adaptador e saem todos no mesmo encaixe, a lista de transações.">
+  <p class="kick a">Padrão de projeto estrutural do catálogo GoF</p>
+  <h1 class="giant ln" aria-label="Adapter"><i>Adapter</i></h1>
+  <h2 class="a">Um contrato para importar OFX, Excel e PDF sem mexer nas regras do sistema.</h2>
+  <div class="acts a"><a class="btn" href="#5" data-goto="5">Ver o código <span><svg class="ic"><use href="#i-arrow"/></svg></span></a><span class="by">[Seu nome]</span></div>
+
+  <svg class="wires" aria-hidden="true">
+    <path id="w1" class="w draw" style="--i:0" pathLength="1" d="M1350 286 H1380 Q1400 286 1400 300 V300 Q1400 300 1414 300 H1430"/>
+    <path id="w2" class="w draw" style="--i:1" pathLength="1" d="M1350 428 H1430"/>
+    <path id="w3" class="w draw" style="--i:2" pathLength="1" d="M1350 570 H1380 Q1400 570 1400 556 V556 Q1400 556 1414 556 H1430"/>
+    <path id="w4" class="w o draw" style="--i:3" pathLength="1" d="M1520 620 V744"/>
+    <g class="pk" fill="#ff6a13">
+      <circle r="6"><animateMotion dur="2.6s" begin="2.4s" repeatCount="indefinite"><mpath href="#w1"/></animateMotion></circle>
+      <circle r="6"><animateMotion dur="2.6s" begin="3.1s" repeatCount="indefinite"><mpath href="#w2"/></animateMotion></circle>
+      <circle r="6"><animateMotion dur="2.6s" begin="3.8s" repeatCount="indefinite"><mpath href="#w3"/></animateMotion></circle>
+    </g>
+  </svg>
+  <div class="pill card glass chip a fl" style="top:238px">extrato.ofx<i class="pt" data-s="ci" data-k="plug" style="left:100%;top:50%"></i></div>
+  <div class="pill card glass chip a fl" style="top:380px">extrato.xlsx<i class="pt" data-s="tr" data-k="plug" style="left:100%;top:50%"></i></div>
+  <div class="pill card glass chip a fl" style="top:522px">extrato.pdf<i class="pt" data-s="hx" data-k="plug" style="left:100%;top:50%"></i></div>
+  <div class="adp card glass a pp" style="--i:4">
+    <i class="pt" data-s="ci" data-k="sock" style="left:0;top:64px"></i>
+    <i class="pt" data-s="tr" data-k="sock" style="left:0;top:192px"></i>
+    <i class="pt" data-s="hx" data-k="sock" style="left:0;top:320px"></i>
+    <span class="well hot"><svg class="ic"><use href="#i-plug"/></svg></span>Adapter<small>● ▲ ⬢ → ■</small>
+    <i class="pt" data-s="sq" data-k="plug" style="left:50%;top:100%"></i>
+  </div>
+  <div class="pill out a pp" style="--i:6"><i class="pt" data-s="sq" data-k="sock" style="left:50%;top:0"></i><b></b>Transaction[]</div>
+</section>
+
+<!-- ═════════════ 02 · Três jeitos ═════════════ -->
+<section class="slide lt" id="s2" data-sec="O problema" data-cable="M1300 -120 C 1500 160, 1640 420, 2080 520" data-title="A mesma transação chega de três jeitos"
+ data-notes="Mostrar que o dado é o mesmo (pagamento de 150 reais a um fornecedor), mas cada origem o representa de forma diferente. Cada formato tem um encaixe próprio, e nenhum deles é o que o sistema espera.">
+  <div class="left">
+    <h1 class="title" data-split="A mesma|transação chega|de três jeitos"></h1>
+    <p class="lead a">Sem um padrão, o serviço vira um if/else por formato, e cada formato novo mexe nas regras centrais.</p>
+    <div class="legend a"><span><i class="gl" data-s="ci"></i>OFX</span><span><i class="gl" data-s="tr"></i>Excel</span><span><i class="gl" data-s="hx"></i>PDF</span><span><i class="gl" data-s="sq"></i>o que o sistema espera</span></div>
+  </div>
+  <div class="rows">
+    <div class="src card glass a fr"><span class="well"><svg class="ic"><use href="#i-bank"/></svg></span><div><div class="fn">extrato.ofx</div><div class="val">TRNAMT: <u>-150.00</u></div><div class="cap">O sinal indica débito ou crédito.</div></div><i class="pt" data-s="ci" data-k="plug"></i></div>
+    <div class="src card glass a fr"><span class="well"><svg class="ic"><use href="#i-sheet"/></svg></span><div><div class="fn">extrato.xlsx</div><div class="val">Valor: <u>150,00</u> · Débito</div><div class="cap">Cabeçalhos próprios e vírgula decimal.</div></div><i class="pt" data-s="tr" data-k="plug"></i></div>
+    <div class="src card glass a fr"><span class="well"><svg class="ic"><use href="#i-doc"/></svg></span><div><div class="fn">extrato.pdf</div><div class="val">"… FORNECEDOR <u>-150,00</u>"</div><div class="cap">Texto livre que precisa ser extraído.</div></div><i class="pt" data-s="hx" data-k="plug"></i></div>
+  </div>
+</section>
+
+<!-- ═════════════ 03 · Conceito ═════════════ -->
+<section class="slide dk" id="s3" data-sec="O conceito" data-cable="M1480 1200 C 1620 1000, 1760 960, 2080 900" data-title="O conceito: o Adapter converte uma interface incompatível"
+ data-notes="Os quatro participantes do GoF mapeados para o nosso sistema. Os encaixes contam a história: o cliente só conhece o encaixe quadrado do Target; o Adaptee tem outro formato; o Adapter tem um lado de cada. O destaque laranja é o próprio Adapter: as três classes que vamos ver no código.">
+  <p class="kick a">O conceito</p>
+  <h1 data-split="O Adapter converte uma interface|incompatível na interface que o|cliente espera."></h1>
+  <svg class="wires" aria-hidden="true">
+    <path class="w draw" style="--i:1" pathLength="1" d="M450 750 H562"/>
+    <path class="w o draw" style="--i:2" pathLength="1" d="M892 750 H1004"/>
+    <path class="w draw" style="--i:3" pathLength="1" d="M1334 750 H1446"/>
+  </svg>
+  <div class="nd card a" style="left:120px"><span class="well"><svg class="ic"><use href="#i-user"/></svg></span><h3>Client</h3><p>Transaction<wbr>Import<wbr>Service</p><i class="pt" data-s="sq" data-k="plug" style="left:100%;top:150px"></i></div>
+  <div class="nd card a" style="left:562px"><span class="well"><svg class="ic"><use href="#i-target"/></svg></span><h3>Target</h3><p>Transaction<wbr>File<wbr>Adapter</p><i class="pt" data-s="sq" data-k="sock" style="left:0;top:150px"></i><i class="pt" data-s="sq" data-k="sock" style="left:100%;top:150px"></i></div>
+  <div class="nd ad card a pp" style="left:1004px;--i:3"><span class="well"><svg class="ic"><use href="#i-plug"/></svg></span><h3>Adapter</h3><p>OfxAdapter,<br>ExcelAdapter,<br>PdfAdapter</p><i class="pt in" data-s="sq" data-k="plug" style="left:0;top:178px;--i:0"></i><i class="pt" data-s="ci" data-k="sock" style="left:100%;top:178px"></i></div>
+  <div class="nd ae card a" style="left:1446px;--i:5;width:354px"><span class="well"><svg class="ic"><use href="#i-doc"/></svg></span><h3>Adaptee</h3><p>Arquivos e parsers de OFX, planilha e PDF</p><i class="pt in" data-s="ci" data-k="plug" style="left:0;top:150px;--i:2"></i></div>
+  <span class="lab a fd" style="left:506px;--i:6">usa</span>
+  <span class="lab a fd" style="left:948px;--i:7">cumpre</span>
+  <span class="lab a fd" style="left:1390px;--i:8">traduz</span>
+</section>
+
+<!-- ═════════════ 04 · Três entradas ═════════════ -->
+<section class="slide lt" id="s4" data-sec="O problema" data-title="Três entradas viram o mesmo objeto"
+ data-notes="Os três exemplos representam a mesma movimentação. Cada um passa pelo seu adaptador e sai no mesmo encaixe: o objeto Transaction.">
+  <h1 class="title" data-split="Três entradas viram o mesmo objeto"></h1>
+  <div class="ins">
+    <div class="src card glass a fl"><span class="well"><svg class="ic"><use href="#i-bank"/></svg></span><div><div class="fn">extrato.ofx</div><div class="val">TRNAMT: -150.00
+FITID: TX001</div></div><i class="pt" data-s="ci" data-k="plug"></i></div>
+    <div class="src card glass a fl"><span class="well"><svg class="ic"><use href="#i-sheet"/></svg></span><div><div class="fn">extrato.xlsx</div><div class="val">Valor: 150,00
+Tipo: Débito</div></div><i class="pt" data-s="tr" data-k="plug"></i></div>
+    <div class="src card glass a fl"><span class="well"><svg class="ic"><use href="#i-doc"/></svg></span><div><div class="fn">extrato.pdf</div><div class="val">05/10/2026
+PAGAMENTO FORNECEDOR -150,00</div></div><i class="pt" data-s="hx" data-k="plug"></i></div>
+  </div>
+  <svg class="wires" aria-hidden="true">
+    <path class="w draw" style="--i:0" pathLength="1" d="M720 376 H800"/>
+    <path class="w draw" style="--i:1" pathLength="1" d="M720 556 H800"/>
+    <path class="w draw" style="--i:2" pathLength="1" d="M720 736 H800"/>
+    <path class="w o draw" style="--i:3" pathLength="1" d="M920 376 H950 Q980 376 980 406 V530 Q980 556 1010 556 H1040"/>
+    <path class="w o draw" style="--i:4" pathLength="1" d="M920 556 H1040"/>
+    <path class="w o draw" style="--i:5" pathLength="1" d="M920 736 H950 Q980 736 980 706 V582 Q980 556 1010 556"/>
+  </svg>
+  <div class="mini card a pp" style="top:344px;--i:4"><i class="pt" data-s="ci" data-k="sock" style="left:0"></i>Ofx<i class="pt" data-s="sq" data-k="plug" style="left:100%"></i></div>
+  <div class="mini card a pp" style="top:524px;--i:5"><i class="pt" data-s="tr" data-k="sock" style="left:0"></i>Excel<i class="pt" data-s="sq" data-k="plug" style="left:100%"></i></div>
+  <div class="mini card a pp" style="top:704px;--i:6"><i class="pt" data-s="hx" data-k="sock" style="left:0"></i>Pdf<i class="pt" data-s="sq" data-k="plug" style="left:100%"></i></div>
+  <div class="code a pp" style="--i:7"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-box"/></svg></span>transaction.json<span class="sig"><i class="gl" data-s="sq"></i></span></div>
+<pre data-lang="ts">{
+  date: "2026-10-05",
+  description: "Pagamento fornecedor",
+  amount: 150, type: "DEBIT",
+  externalId: "TX001",
+}</pre><i class="pt" data-s="sq" data-k="sock"></i></div>
+  <p class="note a"><b>amount</b> guarda sempre o valor absoluto; <b>type</b> diz se é crédito ou débito. É uma convenção do domínio, não do padrão.</p>
+</section>
+
+<!-- ═════════════ 05 · Modelo e contrato ═════════════ -->
+<section class="slide lt" id="s5" data-sec="Implementação" data-cable="M-120 860 C 160 900, 360 1000, 520 1200" data-title="O modelo e o contrato"
+ data-notes="A interface é o Target do padrão: o encaixe quadrado. Tudo o que vem depois depende apenas dela. (→ revela o contrato)">
+  <div class="col">
+    <div class="track a" data-now="1 2" data-label="Passos 1 e 2 de 5"></div>
+    <h1 class="title" data-split="O modelo|e o contrato"></h1>
+    <p class="lead a">Primeiro definimos o que o sistema entende. Depois, a regra que todo adaptador precisa cumprir.</p>
+    <p class="callout st" data-step="2"><span class="well"><svg class="ic"><use href="#i-target"/></svg></span>A interface não menciona Excel, PDF nem OFX.</p>
+  </div>
+  <div class="code a fr" id="c1"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-box"/></svg></span>1 · transaction.ts</div>
+<pre data-lang="ts">type TransactionType = "CREDIT" | "DEBIT";
+
+interface Transaction {
+  date: string;
+  description: string;
+  amount: number;
+  type: TransactionType;
+  externalId?: string;
+}</pre></div>
+  <div class="code st" id="c2" data-step="1"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-target"/></svg></span>2 · transaction-file-adapter.ts<span class="sig"><span class="tagt">Target</span><i class="gl" data-s="sq"></i></span></div>
+<pre data-lang="ts">interface TransactionFileAdapter {
+  parse(content: Buffer): Promise&lt;Transaction[]&gt;;
+}</pre></div>
+</section>
+
+<!-- ═════════════ 06 · OfxAdapter ═════════════ -->
+<section class="slide lt" id="s6" data-sec="Implementação" data-cable="M2080 700 C 1900 760, 1820 900, 1780 1200" data-title="OfxAdapter"
+ data-notes="Cada anotação mostra um campo do OFX virando um campo do modelo. parseOfxFile e normalizeOfxDate são funções ilustrativas. (→ acende um mapeamento por vez)">
+  <div class="head">
+    <div class="track a" data-now="3" data-label="Passo 3 de 5: um adaptador por formato"></div>
+    <h1 class="title" data-split="OfxAdapter"></h1>
+  </div>
+  <div class="split">
+    <div class="code a pp">
+      <div class="bar"><span class="fi"><svg class="ic"><use href="#i-plug"/></svg></span>ofx.adapter.ts<span class="sig"><i class="gl" data-s="ci"></i>→<i class="gl" data-s="sq"></i></span></div>
+      <i class="hl st" data-step="1" style="--l:5"></i><i class="hl st" data-step="2" style="--l:6"></i><i class="hl st" data-step="3" style="--l:7"></i><i class="hl st" data-step="4" style="--l:8"></i><i class="hl st" data-step="5" style="--l:9"></i>
+<pre data-lang="ts">class OfxAdapter implements TransactionFileAdapter {
+  async parse(content: Buffer): Promise&lt;Transaction[]&gt; {
+    const entries = await parseOfxFile(content);
+    return entries.map((entry) =&gt; ({
+      date: normalizeOfxDate(entry.DTPOSTED),
+      description: entry.MEMO,
+      amount: Math.abs(Number(entry.TRNAMT)),
+      type: Number(entry.TRNAMT) &lt; 0 ? "DEBIT" : "CREDIT",
+      externalId: entry.FITID,
+    }));
+  }
+}</pre>
+    </div>
+    <div class="rail2">
+      <div class="map card st" data-step="1" style="--l:5"><b>DTPOSTED</b><i>→</i><em>date</em></div>
+      <div class="map card st" data-step="2" style="--l:6"><b>MEMO</b><i>→</i><em>description</em></div>
+      <div class="map card st" data-step="3" style="--l:7"><b>TRNAMT</b><i>→</i><em>amount</em></div>
+      <div class="map card st" data-step="4" style="--l:8"><span>sinal de&nbsp;<b>TRNAMT</b></span><i>→</i><em>type</em></div>
+      <div class="map card st" data-step="5" style="--l:9"><b>FITID</b><i>→</i><em>externalId</em></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 07 · Excel e PDF ═════════════ -->
+<section class="slide lt" id="s7" data-sec="Implementação" data-title="Excel e PDF"
+ data-notes="Os dois seguem a mesma forma do OfxAdapter e implementam TransactionFileAdapter (omitido no slide). Cada adaptador conhece o encaixe da sua entrada; todos entregam o mesmo encaixe de saída.">
+  <div class="head">
+    <div class="track a" data-now="3" data-label="Passo 3 de 5: um adaptador por formato"></div>
+    <h1 class="title" data-split="Excel e PDF"></h1>
+  </div>
+  <div class="code sm a fl" id="ex"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-plug"/></svg></span>excel.adapter.ts<span class="sig"><i class="gl" data-s="tr"></i>→<i class="gl" data-s="sq"></i></span></div>
+<pre data-lang="ts">class ExcelAdapter {
+  async parse(content: Buffer) {
+    const rows = await parseExcelFile(content);
+    return rows.map((row) =&gt; ({
+      date: normalizeExcelDate(row["Data"]),
+      description: row["Histórico"],
+      amount: Math.abs(parseMoney(row["Valor"])),
+      type: normalizeTransactionType(row["Tipo"]),
+    }));
+  }
+}</pre><i class="pt" data-s="sq" data-k="plug" style="left:50%;top:100%"></i></div>
+  <div class="code sm a fr" id="pf"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-plug"/></svg></span>pdf.adapter.ts<span class="sig"><i class="gl" data-s="hx"></i>→<i class="gl" data-s="sq"></i></span></div>
+<pre data-lang="ts">class PdfAdapter {
+  async parse(content: Buffer) {
+    const text = await extractPdfText(content);
+    const entries = parseStatementLines(text);
+    return entries.map((entry) =&gt; ({
+      date: normalizePdfDate(entry.date),
+      description: entry.description,
+      amount: Math.abs(parseMoney(entry.amount)),
+      type: entry.amount &lt; 0 ? "DEBIT" : "CREDIT",
+    }));
+  }
+}</pre><i class="pt" data-s="sq" data-k="plug" style="left:50%;top:100%"></i></div>
+  <svg class="wires" aria-hidden="true">
+    <path class="w o draw" style="--i:4" pathLength="1" d="M534 836 V900"/>
+    <path class="w o draw" style="--i:4" pathLength="1" d="M1386 874 V900"/>
+  </svg>
+  <div class="join a pp" style="--i:6"><i class="gl" data-s="sq"></i>mesma saída: Transaction[]</div>
+</section>
+
+<!-- ═════════════ 08 · Serviço ═════════════ -->
+<section class="slide lt" id="s8" data-sec="Implementação" data-cable="M-140 640 C 200 700, 500 900, 700 1200" data-title="Um serviço para todos os formatos"
+ data-notes="Este é o Client do padrão: ele só tem o encaixe quadrado. A linha destacada é onde o adaptador é usado sem o serviço saber qual formato está por trás. O método validate foi omitido no slide.">
+  <div class="col">
+    <div class="track a" data-now="4" data-label="Passo 4 de 5"></div>
+    <h1 class="title md" data-split="Um serviço|para todos|os formatos"></h1>
+    <p class="lead a">Validação, deduplicação e persistência ficam aqui, fora dos adaptadores.</p>
+  </div>
+  <div class="code a fr">
+    <div class="bar"><span class="fi"><svg class="ic"><use href="#i-user"/></svg></span>transaction-import-service.ts<span class="sig"><i class="gl" data-s="sq"></i></span></div>
+    <i class="hl st" data-step="1" style="--l:6"></i>
+<pre data-lang="ts">class TransactionImportService {
+  async import(
+    content: Buffer,
+    adapter: TransactionFileAdapter,
+  ): Promise&lt;Transaction[]&gt; {
+    const transactions = await adapter.parse(content);
+    this.validate(transactions);
+    // deduplicação, regras de negócio, persistência
+
+    return transactions;
+  }
+}</pre>
+  </div>
+  <div class="nt card glass st" data-step="1">Recebe a interface, não uma classe concreta.<small>Por isso aceita qualquer adaptador.</small></div>
+</section>
+
+<!-- ═════════════ 09 · Escolher adaptador ═════════════ -->
+<section class="slide lt" id="s9" data-sec="Implementação" data-title="Passo 5: escolher o adaptador"
+ data-notes="O terminal é ilustrativo: mostra o mesmo serviço recebendo adaptadores diferentes e o erro para um formato ainda não registrado. O objeto adapters já faz uma seleção simples, sem Factory completa. (→ roda um comando por vez)">
+  <div class="head">
+    <div class="track a" data-now="5" data-label="Passo 5 de 5"></div>
+    <h1 class="title" data-split="Passo 5: escolher o adaptador"></h1>
+  </div>
+  <div class="code sm a fl" id="c1"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-code"/></svg></span>import-file.ts</div>
+<pre data-lang="ts">async function importFile(
+  ext: string, content: Buffer,
+) {
+  const adapter = adapters[ext.toLowerCase()];
+  if (!adapter) {
+    throw new Error("Formato não suportado");
+  }
+  const service = new TransactionImportService();
+  return service.import(content, adapter);
+}</pre></div>
+  <div class="code sm a fr" id="c2"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-route"/></svg></span>adapter-resolver.ts<span class="sig"><i class="gl" data-s="ci"></i><i class="gl" data-s="tr"></i><i class="gl" data-s="hx"></i></span></div>
+<pre data-lang="ts">const adapters: Record&lt;string, TransactionFileAdapter&gt; = {
+  ofx: new OfxAdapter(),
+  xlsx: new ExcelAdapter(),
+  pdf: new PdfAdapter(),
+};</pre></div>
+  <div class="code sm dark a fr" id="c3" style="--i:3"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-term"/></svg></span>terminal</div>
+    <div class="term"><div class="idle">$ <i></i></div>
+      <div class="cmd st" data-step="1" style="--n:28"><span class="pr">$ </span><span class="ty">importFile("ofx", ofxBuffer)</span><span class="res ok">✓ OfxAdapter → Transaction[]</span></div>
+      <div class="cmd st" data-step="2" style="--n:30"><span class="pr">$ </span><span class="ty">importFile("xlsx", excelBuffer)</span><span class="res ok">✓ ExcelAdapter → Transaction[]</span></div>
+      <div class="cmd st" data-step="3" style="--n:28"><span class="pr">$ </span><span class="ty">importFile("csv", csvBuffer)</span><span class="res no">✗ Error: Formato não suportado</span></div>
+    </div>
+  </div>
+  <p class="tn card glass st" data-step="1"><span class="well"><svg class="ic"><use href="#i-factory"/></svg></span><span>O objeto <b class="mono" style="font-weight:500;color:var(--fg)">adapters</b> já faz uma seleção simples, sem precisar de uma Factory completa.</span></p>
+</section>
+
+<!-- ═════════════ 10 · Fluxo ═════════════ -->
+<section class="slide lt" id="s10" data-sec="Arquitetura" data-cable="M1500 1200 C 1650 1000, 1800 980, 2080 960" data-title="Como a importação flui no projeto"
+ data-notes="Separar leitura (parsers), tradução (adapters) e regras (domain). Em projeto pequeno dá para começar com menos arquivos.">
+  <div class="panel a fd"></div>
+  <svg class="wires" aria-hidden="true">
+    <path class="w draw" style="--i:0" pathLength="1" d="M380 232 V250 Q380 266 396 266 H544 Q560 266 560 282 V300"/>
+    <path class="w draw" style="--i:0" pathLength="1" d="M740 232 V250 Q740 266 724 266 H576 Q560 266 560 282"/>
+    <path class="w draw" style="--i:0" pathLength="1" d="M560 232 V300"/>
+    <path class="w draw" style="--i:1" pathLength="1" d="M560 340 V880"/>
+    <ellipse cx="560" cy="414" rx="270" ry="28" fill="rgba(255,106,19,.08)" stroke="#ff6a13" stroke-width="2.5" stroke-dasharray="3 9" stroke-linecap="round"/>
+    <ellipse cx="560" cy="778" rx="270" ry="28" fill="rgba(255,106,19,.08)" stroke="#ff6a13" stroke-width="2.5" stroke-dasharray="3 9" stroke-linecap="round"/>
+    <path d="M560 386 V442 M560 750 V806" stroke="#ff6a13" stroke-width="2" stroke-dasharray="4 6"/>
+  </svg>
+  <div class="nd f a pp" style="left:380px;top:206px"><i class="gl" data-s="ci"></i>ofx</div>
+  <div class="nd f a pp" style="left:560px;top:206px"><i class="gl" data-s="tr"></i>xlsx</div>
+  <div class="nd f a pp" style="left:740px;top:206px"><i class="gl" data-s="hx"></i>pdf</div>
+  <div class="nd a" style="left:560px;top:322px"><span class="n">1</span>Upload e validação do arquivo</div>
+  <div class="nd a" style="left:560px;top:506px"><span class="n">2</span>Resolver o adaptador</div>
+  <div class="nd hot a pp" style="left:560px;top:600px"><span class="n">3</span>O adaptador traduz<span class="sig"><i class="gl" data-s="ci"></i><i class="gl" data-s="tr"></i><i class="gl" data-s="hx"></i>→<i class="gl" data-s="sq"></i></span></div>
+  <div class="nd a" style="left:560px;top:694px"><span class="n">4</span>Modelo normalizado<span class="sig"><i class="gl" data-s="sq"></i></span></div>
+  <div class="nd a" style="left:560px;top:880px"><span class="n">5</span>Validação, duplicidades e gravação</div>
+  <div class="r"><h1 class="title" data-split="Como a importação|flui no projeto"></h1><p class="mono a" style="margin-top:18px;font-size:22px;color:var(--mut)">src/transactions/</p></div>
+  <div class="cards">
+    <div class="card a fr"><span class="well"><svg class="ic"><use href="#i-scan"/></svg></span><div><h4>import/parsers/</h4><p>Lê o arquivo, com bibliotecas como SheetJS ou PDF.js.</p><small>ofx · excel · pdf .parser.ts</small></div></div>
+    <div class="card hot a fr"><span class="well hot"><svg class="ic"><use href="#i-plug"/></svg></span><div><h4>import/adapters/</h4><p>Traduz os campos de cada formato para o modelo comum.</p><small>ofx · excel · pdf .adapter.ts</small></div></div>
+    <div class="card a fr"><span class="well"><svg class="ic"><use href="#i-db"/></svg></span><div><h4>domain/</h4><p>Regras de negócio, validação, deduplicação e gravação.</p><small>transaction-import-service.ts</small></div></div>
+  </div>
+</section>
+
+<!-- ═════════════ 11 · Não resolve ═════════════ -->
+<section class="slide lt" id="s11" data-sec="Limites" data-cable="M-140 980 C 200 920, 420 960, 640 1200" data-title="O que o padrão não resolve sozinho"
+ data-notes="A qualidade da extração e as regras de negócio continuam precisando de tratamento explícito, fora dos adaptadores.">
+  <div class="l"><h1 class="title" data-split="O que o|padrão não|resolve|sozinho"></h1></div>
+  <div class="final a pp" style="--i:9">O Adapter só faz a tradução técnica.</div>
+  <div class="big a fr"><span class="well"><svg class="ic"><use href="#i-copy"/></svg></span><div><h3>Duplicidades são regra do domínio</h3><p>Use o FITID do OFX, mas deduplique no serviço, nunca no adaptador.</p></div></div>
+  <div class="grid">
+    <div class="card a fr"><span class="well"><svg class="ic"><use href="#i-coins"/></svg></span><div><h3>Valores</h3><p>Centavos inteiros ou biblioteca decimal.</p></div></div>
+    <div class="card a fr"><span class="well"><svg class="ic"><use href="#i-cal"/></svg></span><div><h3>Datas</h3><p>Fuso horário e formatos aceitos explícitos.</p></div></div>
+    <div class="card a fr"><span class="well"><svg class="ic"><use href="#i-scan"/></svg></span><div><h3>PDFs</h3><p>O usuário revisa o que foi extraído.</p></div></div>
+    <div class="card a fr"><span class="well"><svg class="ic"><use href="#i-alert"/></svg></span><div><h3>Erros parciais</h3><p>Dizer quais linhas falharam e por quê.</p></div></div>
+    <div class="card a fr" style="grid-column:span 2"><span class="well"><svg class="ic"><use href="#i-shield"/></svg></span><div><h3>Segurança</h3><p>Validar o conteúdo real e limitar o tamanho.</p></div></div>
+  </div>
+</section>
+
+<!-- ═════════════ 12 · Três padrões ═════════════ -->
+<section class="slide lt" id="s12" data-sec="Arquitetura" data-cable="M-140 640 C 100 700, 240 960, 280 1200" data-title="Três padrões que trabalham juntos no projeto"
+ data-notes="Pergunta comum: o mapa adapters já é uma Factory? É uma seleção simples; uma Factory completa só vale quando a criação ficar complexa.">
+  <h1 class="title" data-split="Três padrões que trabalham juntos no projeto"></h1>
+  <div class="rows">
+    <div class="row hot a pp"><span class="well"><svg class="ic"><use href="#i-plug"/></svg></span><h2>Adapter</h2><div><p>Converte OFX, Excel e PDF para um modelo comum.</p><small>OfxAdapter, ExcelAdapter, PdfAdapter</small></div></div>
+    <div class="row card a"><span class="well"><svg class="ic"><use href="#i-factory"/></svg></span><h2>Factory</h2><div><p>Cria ou seleciona o adaptador certo.</p><small>No projeto: o mapa adapters</small></div></div>
+    <div class="row card a"><span class="well"><svg class="ic"><use href="#i-swap"/></svg></span><h2>Strategy</h2><div><p>Troca um algoritmo por outro.</p><small>No projeto: regras de duplicidade</small></div></div>
+  </div>
+</section>
+
+<!-- ═════════════ 13 · Demo ═════════════ -->
+<section class="slide dk" id="s13" data-sec="Demonstração" data-cable="M1300 1200 C 1500 1000, 1700 1000, 2080 900" data-title="Veja o código rodando"
+ data-notes="Espaço reservado para o vídeo com o código. Roteiro: mostrar que o mesmo serviço processa OFX e Excel e que um formato novo, como CSV, só exige um adaptador novo. Para usar o vídeo real, salve demo-adapter.mp4 ao lado do index.html.">
+  <h1 class="title" data-split="Veja o código rodando"></h1>
+  <div class="vid a pp">
+    <div class="code dark"><div class="bar"><span class="fi"><svg class="ic"><use href="#i-play"/></svg></span>demo-adapter.mp4</div>
+      <div class="vframe" id="vf">
+        <video id="demo" src="demo-adapter.mp4" preload="metadata" playsinline></video>
+        <div class="ph"><div class="play"><svg width="48" height="48" viewBox="0 0 24 24" fill="#17181b"><path d="M8 5.5v13l11-6.5z"/></svg></div><span>[Vídeo da demonstração]</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="road">
+    <h3 class="a">Roteiro</h3>
+    <ol>
+      <li class="card a fr"><b>1</b>Importar um arquivo OFX</li>
+      <li class="card a fr"><b>2</b>A mesma transação em Excel</li>
+      <li class="card a fr"><b>3</b>Comparar as duas saídas</li>
+      <li class="card a fr"><b>4</b>Adicionar um formato novo</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═════════════ 14 · Fecho ═════════════ -->
+<section class="slide lt" id="s14" data-sec="Encerramento" data-cable="M-140 1060 C 400 1040, 760 760, 1180 760 S 1700 520, 2080 360" data-title="Formato novo? Basta um adaptador novo."
+ data-notes="Fechar reforçando que o Adapter faz a tradução técnica, enquanto regras de negócio e qualidade da extração ficam a cargo do domínio. O diagrama mostra o CSV, que deu erro no terminal: com um adaptador novo, ele entra no mesmo encaixe.">
+  <h1 data-split="Formato novo?|Basta um adaptador novo."></h1>
+  <p class="lead a">Uma interface, um adaptador por formato e um serviço independente dos arquivos. As regras centrais não mudam.</p>
+  <div class="q a"><span>Perguntas?</span><span class="card glass">Obrigado!</span></div>
+  <div class="refs"><span class="card glass a"><i>Gamma et al., Design Patterns</i></span><span class="card glass a">Refactoring.Guru</span><span class="card glass a">SheetJS</span><span class="card glass a">PDF.js</span><span class="card glass a">OFX</span></div>
+  <p class="by a">[Seu nome], [Disciplina], Prof.ª [Nome]</p>
+  <div class="newf">
+    <svg class="wires" style="left:0;top:0;width:600px;height:400px" aria-hidden="true">
+      <path class="w o draw" style="--i:2" pathLength="1" d="M300 92 V150"/>
+      <path class="w o draw" style="--i:4" pathLength="1" d="M300 234 V292"/>
+    </svg>
+    <span class="cap a fd">Ex.: o CSV que falhou no terminal</span>
+    <div class="pill card glass a pp" style="left:120px;top:8px;width:360px;justify-content:center;font:500 28px var(--mono)"><i class="gl" data-s="pl" style="width:24px;height:24px"></i>extrato.csv<i class="pt" data-s="pl" data-k="plug" style="left:50%;top:100%"></i></div>
+    <div class="pill card a pp" style="--i:3;left:120px;top:150px;width:360px;justify-content:center;font:600 28px var(--sans);outline:3px solid var(--or)"><i class="pt in" data-s="pl" data-k="sock" style="left:50%;top:0;--i:0"></i>CsvAdapter<i class="pt" data-s="sq" data-k="plug" style="left:50%;top:100%"></i></div>
+    <div class="pill a pp" style="--i:5;left:120px;top:292px;width:360px;justify-content:center;background:var(--ink);color:#fff;font:500 28px var(--mono)"><i class="pt" data-s="sq" data-k="sock" style="left:50%;top:0"></i><b style="width:14px;height:14px;border-radius:50%;background:var(--green)"></b>Transaction[]</div>
+  </div>
+</section>
+
+</div><!-- /wall -->
+
+<!-- ═════════════ Interface ═════════════ -->
+<div class="ui">
+  <button class="edge l" id="eprev" aria-label="Slide anterior"><span><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span></button>
+  <button class="edge r" id="enext" aria-label="Próximo slide"><span><svg class="ic" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></span></button>
+  <div id="bar"><i></i></div>
+  <nav id="dock" aria-label="Controles da apresentação">
+    <button data-cmd="prev" data-tip="Anterior ←" aria-label="Anterior"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="pos" id="pos">1 / 14</div>
+    <button data-cmd="next" data-tip="Próximo →" aria-label="Próximo"><svg class="ic" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <span class="sep"></span>
+    <button data-cmd="overview" data-tip="Parede de slides O" aria-label="Visão geral"><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="7" height="6" rx="1.5"/><rect x="13.5" y="4.5" width="7" height="6" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="6" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="6" rx="1.5"/></svg></button>
+    <button data-cmd="notes" data-tip="Notas N" aria-label="Notas do apresentador"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3.5h9l4 4v13H6z"/><path d="M9 12h7M9 16h5"/></svg></button>
+    <button data-cmd="laser" data-tip="Laser L" aria-label="Ponteiro laser"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></button>
+    <button data-cmd="palette" data-tip="Comandos K" aria-label="Paleta de comandos"><svg class="ic" viewBox="0 0 24 24"><path d="M5 8l4 4-4 4M12 17h7"/></svg></button>
+    <span class="sep"></span>
+    <button data-cmd="frame" data-tip="Moldura M" aria-label="Alternar moldura"><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="3"/><rect x="7" y="9" width="10" height="6" rx="1"/></svg></button>
+    <button data-cmd="pdf" data-tip="Exportar PDF P" aria-label="Exportar PDF"><svg class="ic" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></svg></button>
+    <button data-cmd="fullscreen" data-tip="Tela cheia F" aria-label="Tela cheia"><svg class="ic" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </nav>
+  <aside id="notes" aria-label="Notas do apresentador">
+    <div><h5 id="nh"></h5><p id="np"></p><p class="nx" id="nn"></p></div>
+    <div class="tm"><small>Tempo</small><span id="tm">00:00</span></div>
+  </aside>
+  <div id="pal" role="dialog" aria-label="Comandos"><div class="box">
+    <input id="pq" placeholder="Digite um comando ou o nome de um slide…" autocomplete="off" spellcheck="false">
+    <ul id="pl"></ul>
+    <div class="foot2"><span>↑↓ navegar</span><span>↵ executar</span><span>esc fechar</span></div>
+  </div></div>
+  <div id="help" role="dialog" aria-label="Atalhos"><div class="box">
+    <h2>Atalhos</h2>
+    <dl>
+      <div>Próximo / revelar <span><kbd>→</kbd><kbd>Espaço</kbd></span></div>
+      <div>Anterior <span><kbd>←</kbd><kbd>⌫</kbd></span></div>
+      <div>Pular passos <span><kbd>⇧</kbd><kbd>→ ←</kbd></span></div>
+      <div>Primeiro / último <span><kbd>Home</kbd><kbd>End</kbd></span></div>
+      <div>Ir para o slide <span><kbd>12</kbd><kbd>↵</kbd></span></div>
+      <div>Comandos <span><kbd>K</kbd><kbd>Ctrl K</kbd></span></div>
+      <div>Parede de slides <span><kbd>O</kbd></span></div>
+      <div>Moldura / tela inteira <span><kbd>M</kbd></span></div>
+      <div>Notas e cronômetro <span><kbd>N</kbd></span></div>
+      <div>Zerar cronômetro <span><kbd>T</kbd></span></div>
+      <div>Ponteiro laser <span><kbd>L</kbd></span></div>
+      <div>Tela preta <span><kbd>B</kbd></span></div>
+      <div>Tela cheia <span><kbd>F</kbd></span></div>
+      <div>Exportar PDF <span><kbd>P</kbd></span></div>
+    </dl>
+  </div></div>
+  <div id="toast" role="status"></div>
+  <div id="blank"></div>
+  <div id="laser"></div>
+  <div id="live" class="sr" aria-live="polite"></div>
+</div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const root = document.documentElement, wall = $('#wall');
+  const slides = $$('.slide'), N = slides.length;
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pad2 = n => String(n).padStart(2, '0');
+  const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const NS = 'http://www.w3.org/2000/svg';
+
+  /* ── pinos de encaixe: ● OFX · ▲ Excel · ⬢ PDF · ✚ CSV · ■ Transaction ── */
+  const SHAPE = {
+    ci: k => `<circle class="${k}" cx="14" cy="14" r="10.5"/>`,
+    tr: k => `<polygon class="${k}" points="14,3 25,24 3,24" stroke-linejoin="round"/>`,
+    hx: k => `<polygon class="${k}" points="14,2.5 24,8.25 24,19.75 14,25.5 4,19.75 4,8.25" stroke-linejoin="round"/>`,
+    pl: k => `<path class="${k}" d="M10 3h8v7h7v8h-7v7h-8v-7H3v-8h7z" stroke-linejoin="round"/>`,
+    sq: k => `<rect class="${k} sq" x="4" y="4" width="20" height="20" rx="3.5"/>`,
+  };
+  $$('.pt').forEach(p => { p.innerHTML = `<svg viewBox="0 0 28 28">${SHAPE[p.dataset.s](p.dataset.k)}</svg>`; });
+  $$('.gl').forEach(g => { g.innerHTML = `<svg viewBox="0 0 28 28">${SHAPE[g.dataset.s]('plug')}</svg>`; });
+
+  /* ── destaque de sintaxe (leve) ── */
+  const KW = new Set('class interface type implements async await const return new if throw function'.split(' '));
+  const TY = new Set('string number Buffer Promise Record'.split(' '));
+  const TOK = /(\/\/.*)|("(?:[^"\\]|\\.)*")|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_$][\w$]*\b)/g;
+  function highlight(src) {
+    let out = '', last = 0, m;
+    TOK.lastIndex = 0;
+    while ((m = TOK.exec(src))) {
+      out += esc(src.slice(last, m.index)); last = TOK.lastIndex;
+      const t = m[0];
+      if (m[1]) out += `<span class="c">${esc(t)}</span>`;
+      else if (m[2]) out += `<span class="s">${esc(t)}</span>`;
+      else if (m[3]) out += `<span class="n">${t}</span>`;
+      else if (KW.has(t)) out += `<span class="k">${t}</span>`;
+      else if (TY.has(t) || /^[A-Z]/.test(t)) out += `<span class="t">${t}</span>`;
+      else out += t;
+    }
+    return out + esc(src.slice(last));
+  }
+  $$('pre[data-lang]').forEach(p => { p.innerHTML = highlight(p.textContent); });
+
+  /* ── montagem ── */
+  const LOGO = `<svg viewBox="0 0 52 28" aria-hidden="true"><rect x="9" y="4" width="34" height="20" rx="10" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="9" cy="14" r="6.5" fill="#17181b"/><rect x="38" y="8.5" width="11" height="11" rx="2.2" fill="#ff6a13"/></svg>`;
+  $$('[data-split]').forEach(h => {
+    h.innerHTML = h.dataset.split.split('|').map((l, j) => `<span class="ln"><i style="--j:${j}">${esc(l)}</i></span>`).join('');
+    h.setAttribute('aria-label', h.dataset.split.replace(/\|/g, ' '));
+  });
+  let cid = 0;
+  slides.forEach((s, k) => {
+    s.insertAdjacentHTML('afterbegin', `<header class="hdr"><span class="logo">${LOGO}Adapter Pattern</span><span class="yr">2026</span></header>`);
+    s.insertAdjacentHTML('beforeend', `<footer class="ftr"><span>${s.dataset.sec}</span><span>Importador de transações</span><span>Padrão estrutural · GoF</span><span class="pg">${pad2(k + 1)}</span></footer>`);
+    if (s.classList.contains('dk')) $('.logo circle', s).setAttribute('fill', '#f1f0ed');
+    if (s.dataset.cable) {
+      const id = 'cg' + (cid++);
+      s.insertAdjacentHTML('afterbegin', `<svg class="cable" viewBox="0 0 1920 1080" aria-hidden="true">
+        <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="1080" x2="1920" y2="0"><stop offset="0" stop-color="#ffc9a1"/><stop offset=".45" stop-color="#ff7a24"/><stop offset="1" stop-color="#ff5200"/></linearGradient></defs>
+        <path class="glow draw" pathLength="1" d="${s.dataset.cable}" fill="none" stroke="url(#${id})" stroke-width="230" stroke-linecap="round" opacity="${s.classList.contains('dk') ? .55 : .95}"/>
+        <path class="core draw" pathLength="1" d="${s.dataset.cable}" fill="none" stroke="url(#${id})" stroke-width="54" stroke-linecap="round" opacity=".55"/>
+      </svg>`);
+    }
+    $$('.a', s).forEach((el, j) => { if (!el.style.getPropertyValue('--i')) el.style.setProperty('--i', j); });
+    const tr = $('.track', s);
+    if (tr) {
+      const now = tr.dataset.now.split(' ').map(Number), last = now[now.length - 1];
+      const x = n => 8 + (n - 1) * 71;
+      tr.innerHTML = `<span class="rail"><b style="width:${x(last) - 8}px"></b>${[1, 2, 3, 4, 5].map(n => `<i style="left:${x(n) + 9}px" class="${now.includes(n) ? 'now' : n < now[0] ? 'done' : ''}"></i>`).join('')}</span><span>${tr.dataset.label}</span>`;
+    }
+    const f = document.createElement('div'); f.className = 'frame'; f.dataset.n = pad2(k + 1);
+    s.parentNode.insertBefore(f, s); f.appendChild(s);
+    s.setAttribute('aria-label', `Slide ${k + 1} de ${N}: ${s.dataset.title}`);
+    s.setAttribute('role', 'group'); s.setAttribute('aria-roledescription', 'slide');
+  });
+  const frames = $$('.frame');
+
+  /* ── parede: slides em grade, ligados por um cabo ── */
+  const COLS = 4, G = 240, W = COLS * 1920 + (COLS - 1) * G, ROWS = Math.ceil(N / COLS), H = ROWS * 1080 + (ROWS - 1) * G;
+  const pos = frames.map((f, i) => { const p = { x: (i % COLS) * (1920 + G), y: Math.floor(i / COLS) * (1080 + G) }; f.style.left = p.x + 'px'; f.style.top = p.y + 'px'; return p; });
+  wall.style.width = W + 'px'; wall.style.height = H + 'px';
+  (() => {
+    const svg = $('#cables'); svg.setAttribute('width', W); svg.setAttribute('height', H);
+    let d = '';
+    for (let i = 0; i < N - 1; i++) {
+      const a = pos[i], b = pos[i + 1], ay = a.y + 540, by = b.y + 540, ax = a.x + 1920, bx = b.x;
+      if (b.y === a.y) d += `M${ax} ${ay} H${bx} `;
+      else { const my = a.y + 1080 + G / 2, r = 90; d += `M${ax} ${ay} H${ax + G / 2 - r} Q${ax + G / 2} ${ay} ${ax + G / 2} ${ay + r} V${my - r} Q${ax + G / 2} ${my} ${ax + G / 2 - r} ${my} H${bx - G / 2 + r} Q${bx - G / 2} ${my} ${bx - G / 2} ${my + r} V${by - r} Q${bx - G / 2} ${by} ${bx - G / 2 + r} ${by} H${bx} `; }
+    }
+    svg.innerHTML = `<path d="${d}" fill="none" stroke="#ff6a13" stroke-width="60" stroke-linecap="round" opacity=".25" style="filter:blur(18px)"/><path d="${d}" fill="none" stroke="#ff6a13" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>` +
+      pos.map((p, i) => (i ? `<rect x="${p.x - 34}" y="${p.y + 510}" width="34" height="60" rx="8" fill="#17181b"/>` : '') + (i < N - 1 ? `<rect x="${p.x + 1920}" y="${p.y + 516}" width="44" height="48" rx="8" fill="#ff6a13"/><rect x="${p.x + 1964}" y="${p.y + 526}" width="18" height="8" rx="2" fill="#17181b"/><rect x="${p.x + 1964}" y="${p.y + 546}" width="18" height="8" rx="2" fill="#17181b"/>` : '')).join('');
+  })();
+
+  /* ── câmera ── */
+  let cam = { x: 0, y: 0, z: 1 }, flight = null, ov = false;
+  const bleed = () => root.classList.contains('bleed');
+  const T = c => `translate(${c.x}px,${c.y}px) scale(${c.z})`;
+  const camFor = i => { const z = Math.min(innerWidth / 1920, innerHeight / 1080) * (bleed() ? 1 : .94); return { z, x: innerWidth / 2 - (pos[i].x + 960) * z, y: innerHeight / 2 - (pos[i].y + 540) * z }; };
+  const camAll = () => { const z = Math.min(innerWidth / W, (innerHeight - 90) / H) * .94; return { z, x: (innerWidth - W * z) / 2, y: (innerHeight - 90 - H * z) / 2 + 20 }; };
+  const setCam = c => { cam = c; wall.style.transform = T(c); };
+  function fly(to, { dur = 1050, swoop = true } = {}) {
+    if (flight) { flight.cancel(); flight = null; }
+    const from = cam;
+    if (reduce() || dur === 0) { setCam(to); return; }
+    const kf = [{ transform: T(from), easing: 'cubic-bezier(.55,0,.35,1)' }];
+    if (swoop) {
+      const c1 = { x: (innerWidth / 2 - from.x) / from.z, y: (innerHeight / 2 - from.y) / from.z }, c2 = { x: (innerWidth / 2 - to.x) / to.z, y: (innerHeight / 2 - to.y) / to.z };
+      const dist = Math.hypot(c2.x - c1.x, c2.y - c1.y);
+      const zm = Math.min(from.z, to.z) * Math.max(.3, .78 - dist / 9000);
+      const mc = { x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 };
+      kf.push({ transform: T({ z: zm, x: innerWidth / 2 - mc.x * zm, y: innerHeight / 2 - mc.y * zm }), offset: .5, easing: 'cubic-bezier(.45,0,.25,1)' });
+      dur += Math.min(500, dist / 12);
+    }
+    kf.push({ transform: T(to) });
+    setCam(to);
+    wall.classList.add('flying');
+    flight = wall.animate(kf, { duration: dur });
+    flight.finished.then(() => { wall.classList.remove('flying'); flight = null; }).catch(() => {});
+    return dur;
+  }
+  addEventListener('resize', () => setCam(ov ? camAll() : camFor(cur)));
+
+  /* ── estado ── */
+  let cur = -1, step = 0;
+  const stepsOf = s => Math.max(0, ...$$('[data-step]', s).map(e => +e.dataset.step));
+  const setStep = n => {
+    step = n;
+    $$('[data-step]', slides[cur]).forEach(e => e.classList.toggle('on', +e.dataset.step <= n));
+    progress();
+  };
+  function progress() {
+    const m = stepsOf(slides[cur]);
+    $('#bar i').style.width = ((cur + (m ? step / (m + 1) : 0)) / (N - 1) * 100) + '%';
+    $('#pos').textContent = `${cur + 1} / ${N}`;
+  }
+
+  function go(to, o = {}) {
+    to = Math.max(0, Math.min(N - 1, to));
+    if (to === cur && !o.force && !ov) return;
+    const back = cur >= 0 && to < cur && !ov;
+    const inn = slides[to];
+    const wasOv = ov; ov = false; document.body.classList.remove('ov');
+    const dur = o.instant ? 0 : fly(camFor(to), { swoop: !wasOv }) || 0;
+    inn.classList.remove('enter');
+    inn.style.setProperty('--b', Math.max(0, dur - 420) + 'ms');
+    void inn.offsetWidth;
+    if (!back) inn.classList.add('enter');
+    cur = to;
+    $$('[data-step]', inn).forEach(e => e.classList.toggle('on', back));
+    step = back ? stepsOf(inn) : 0;
+    if (o.step != null) setStep(Math.min(o.step, stepsOf(inn))); else progress();
+    history.replaceState(null, '', '#' + (to + 1));
+    $('#live').textContent = `Slide ${to + 1} de ${N}: ${inn.dataset.title}`;
+    frames.forEach((f, i) => f.classList.toggle('cur', i === to));
+    updateNotes();
+    if (to !== 12) stopVid();
+  }
+  const next = skip => (!skip && step < stepsOf(slides[cur])) ? setStep(step + 1) : go(cur + 1);
+  const prev = skip => (!skip && step > 0) ? setStep(step - 1) : go(cur - 1);
+
+  /* ── parede de slides (visão geral) ── */
+  function overview(on = !ov) {
+    if (!on) return go(cur, { force: true });
+    ov = true; document.body.classList.add('ov');
+    fly(camAll(), { swoop: false, dur: 900 });
+  }
+  frames.forEach((f, i) => f.addEventListener('click', () => { if (ov) go(i, { force: true }); }));
+
+  /* ── notas + cronômetro ── */
+  let t0 = Date.now();
+  function updateNotes() {
+    const s = slides[cur];
+    $('#nh').textContent = `Slide ${cur + 1} de ${N} · ${s.dataset.title}`;
+    $('#np').textContent = s.dataset.notes || '';
+    $('#nn').textContent = slides[cur + 1] ? `Próximo: ${slides[cur + 1].dataset.title}` : 'Último slide';
+  }
+  setInterval(() => { const t = Math.floor((Date.now() - t0) / 1000); $('#tm').textContent = pad2(Math.floor(t / 60)) + ':' + pad2(t % 60); }, 500);
+
+  let tt; const toast = m => { const e = $('#toast'); e.textContent = m; e.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => e.classList.remove('on'), 2800); };
+
+  /* ── comandos ── */
+  const toggleBody = (c, on, off) => toast(document.body.classList.toggle(c) ? on : off);
+  function exportPDF() {
+    toast('Na janela de impressão: “Salvar como PDF”, margens “Nenhuma” e “Gráficos de plano de fundo” ligado.');
+    root.classList.add('pdf');
+    setTimeout(() => print(), 450);
+  }
+  addEventListener('beforeprint', () => root.classList.add('pdf'));
+  addEventListener('afterprint', () => { if (!new URLSearchParams(location.search).has('pdf')) { root.classList.remove('pdf'); setCam(ov ? camAll() : camFor(cur)); } });
+  const fullscreen = () => document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen?.();
+  const blank = () => $('#blank').classList.toggle('on');
+  const frameMode = () => { root.classList.toggle('bleed'); try { localStorage.setItem('deck-bleed', bleed() ? '1' : '0'); } catch (e) {} if (!ov) fly(camFor(cur), { swoop: false, dur: 500 }); toast(bleed() ? 'Tela inteira' : 'Moldura'); };
+
+  const CMDS = [
+    { id: 'next', t: 'Próximo', k: '→', run: () => next() },
+    { id: 'prev', t: 'Anterior', k: '←', run: () => prev() },
+    { id: 'first', t: 'Primeiro slide', k: 'Home', run: () => go(0) },
+    { id: 'last', t: 'Último slide', k: 'End', run: () => go(N - 1) },
+    { id: 'overview', t: 'Parede de slides (visão geral)', k: 'O', run: () => overview() },
+    { id: 'frame', t: 'Alternar moldura / tela inteira', k: 'M', run: frameMode },
+    { id: 'notes', t: 'Notas do apresentador e cronômetro', k: 'N', run: () => toggleBody('shownotes', 'Notas visíveis', 'Notas ocultas') },
+    { id: 'timer', t: 'Zerar cronômetro', k: 'T', run: () => { t0 = Date.now(); toast('Cronômetro zerado'); } },
+    { id: 'laser', t: 'Ponteiro laser', k: 'L', run: () => toggleBody('laser', 'Laser ligado', 'Laser desligado') },
+    { id: 'blank', t: 'Tela preta', k: 'B', run: blank },
+    { id: 'fullscreen', t: 'Tela cheia', k: 'F', run: fullscreen },
+    { id: 'pdf', t: 'Exportar para PDF', k: 'P', run: exportPDF },
+    { id: 'help', t: 'Atalhos de teclado', k: '?', run: () => $('#help').classList.add('open') },
+    { id: 'palette', t: 'Paleta de comandos', k: 'K', run: () => openPalette() },
+  ];
+  const cmd = id => CMDS.find(c => c.id === id).run();
+  $$('[data-cmd]').forEach(b => b.addEventListener('click', () => { cmd(b.dataset.cmd); b.blur(); }));
+  $('#eprev').onclick = () => prev(); $('#enext').onclick = () => next();
+  $$('[data-goto]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); go(+a.dataset.goto - 1); }));
+
+  /* ── paleta ── */
+  let sel = 0, items = [];
+  const pal = $('#pal'), pq = $('#pq'), pl = $('#pl');
+  function renderPalette() {
+    const q = pq.value.trim().toLowerCase();
+    const all = [
+      ...CMDS.map(c => ({ label: c.t, key: c.k, run: c.run, hay: c.t.toLowerCase() })),
+      ...slides.map((s, i) => ({ label: `Ir para ${pad2(i + 1)} · ${s.dataset.title}`, key: '', run: () => go(i), hay: `${i + 1} ${pad2(i + 1)} ir para slide ${s.dataset.title} ${s.dataset.sec}`.toLowerCase() })),
+    ];
+    items = q ? all.filter(i => q.split(/\s+/).every(w => i.hay.includes(w))) : all;
+    sel = Math.min(sel, Math.max(0, items.length - 1));
+    pl.innerHTML = items.length ? items.map((i, k) => `<li class="${k === sel ? 'sel' : ''}" data-k="${k}"><span>${esc(i.label)}</span>${i.key ? `<kbd>${esc(i.key)}</kbd>` : ''}</li>`).join('') : '<div class="empty">Nenhum comando encontrado.</div>';
+    $('.sel', pl)?.scrollIntoView({ block: 'nearest' });
+  }
+  function openPalette() { pal.classList.add('open'); pq.value = ''; sel = 0; renderPalette(); pq.focus(); }
+  function closePalette() { pal.classList.remove('open'); pq.blur(); }
+  function runSel() { const i = items[sel]; if (!i) return; closePalette(); i.run(); }
+  pq.addEventListener('input', () => { sel = 0; renderPalette(); });
+  pl.addEventListener('click', e => { const li = e.target.closest('li'); if (li) { sel = +li.dataset.k; runSel(); } });
+  pal.addEventListener('mousedown', e => { if (e.target === pal) closePalette(); });
+  $('#help').addEventListener('mousedown', e => { if (e.target.id === 'help') $('#help').classList.remove('open'); });
+
+  /* ── teclado ── */
+  let digits = '', dt;
+  addEventListener('keydown', e => {
+    if (pal.classList.contains('open')) {
+      if (e.key === 'Escape') closePalette();
+      else if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); renderPalette(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); renderPalette(); }
+      else if (e.key === 'Enter') { e.preventDefault(); runSel(); }
+      return;
+    }
+    const k = e.key;
+    if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === 'k') { e.preventDefault(); return openPalette(); }
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (k === 'Escape') {
+      if ($('#help').classList.contains('open')) return $('#help').classList.remove('open');
+      if ($('#blank').classList.contains('on')) return blank();
+      if (ov) return overview(false);
+      if (document.body.classList.contains('laser')) return cmd('laser');
+      return;
+    }
+    if (/^\d$/.test(k)) { digits += k; toast('Ir para o slide ' + digits + '  ↵'); clearTimeout(dt); dt = setTimeout(() => { digits = ''; }, 1600); return; }
+    if (k === 'Enter' && digits) { go(+digits - 1); digits = ''; return; }
+    const sk = e.shiftKey;
+    switch (k) {
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ': case 'Enter': e.preventDefault(); ov ? go(cur, { force: true }) : next(sk); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp': case 'Backspace': e.preventDefault(); if (!ov) prev(sk); break;
+      case 'Home': go(0); break;
+      case 'End': go(N - 1); break;
+      case 'o': case 'O': case 'Tab': e.preventDefault(); overview(); break;
+      case 'm': case 'M': frameMode(); break;
+      case 'n': case 'N': cmd('notes'); break;
+      case 't': case 'T': cmd('timer'); break;
+      case 'l': case 'L': cmd('laser'); break;
+      case 'b': case 'B': case '.': blank(); break;
+      case 'f': case 'F': fullscreen(); break;
+      case 'p': case 'P': exportPDF(); break;
+      case 'k': case 'K': case '/': e.preventDefault(); openPalette(); break;
+      case '?': $('#help').classList.add('open'); break;
+    }
+  });
+
+  /* ── ponteiro, ociosidade, toque ── */
+  const laser = $('#laser'); let idleT;
+  addEventListener('mousemove', e => {
+    laser.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
+    root.classList.remove('idle'); clearTimeout(idleT);
+    idleT = setTimeout(() => { if (!ov && !pal.classList.contains('open')) root.classList.add('idle'); }, 2800);
+  });
+  idleT = setTimeout(() => root.classList.add('idle'), 3200);
+  let tx = null;
+  addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  addEventListener('touchend', e => { if (tx == null || ov) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 60) dx < 0 ? next() : prev(); tx = null; });
+  addEventListener('hashchange', () => { const n = parseHash(); if (n && n.i !== cur) go(n.i); });
+
+  /* ── vídeo da demonstração (opcional) ── */
+  const vid = $('#demo'), vf = $('#vf');
+  vid.addEventListener('loadedmetadata', () => vf.classList.add('live'));
+  vid.addEventListener('error', () => vid.remove());
+  vf.addEventListener('click', () => { if (vf.classList.contains('live')) vid.paused ? vid.play() : vid.pause(); });
+  function stopVid() { if (vid.isConnected && !vid.paused) vid.pause(); }
+
+  /* ── início: #6 ou #6.3 (slide 6, passo 3) · ?pdf para o layout de impressão ── */
+  function parseHash() {
+    const m = location.hash.match(/^#(\d+)(?:\.(\d+))?$/);
+    return m ? { i: Math.max(0, Math.min(N - 1, +m[1] - 1)), s: m[2] ? +m[2] : 0 } : null;
+  }
+  try { if (localStorage.getItem('deck-bleed') === '1') root.classList.add('bleed'); } catch (e) {}
+  if (new URLSearchParams(location.search).has('pdf')) root.classList.add('pdf');
+  const h = parseHash();
+  setCam(camFor(h ? h.i : 0));
+  go(h ? h.i : 0, { instant: true, force: true, step: h ? h.s : 0 });
+  window.__deck = { go, next, prev, overview, get cur() { return cur; } };
+})();
+</script>
+</body>
+</html>

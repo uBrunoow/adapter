@@ -1,0 +1,67 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - 'group "Slide 3 de 14: O conceito: o Adapter converte uma interface incompatível" [ref=e92]':
+      - paragraph [ref=e93]: O conceito
+      - heading "O Adapter converte uma interface incompatível na interface que o cliente espera." [level=1] [ref=e94]:
+        - generic [ref=e95]: O Adapter converte uma interface
+        - generic [ref=e97]: incompatível na interface que o
+        - generic [ref=e99]: cliente espera.
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - heading "Client" [level=3] [ref=e103]
+          - paragraph [ref=e104]: TransactionImportService
+        - generic [ref=e105]: usa
+        - generic [ref=e109]:
+          - heading "Target" [level=3] [ref=e110]
+          - paragraph [ref=e111]: TransactionFileAdapter
+        - generic [ref=e112]: cumpre
+        - generic [ref=e116]:
+          - heading "Adapter" [level=3] [ref=e117]
+          - paragraph [ref=e118]: OfxAdapter,ExcelAdapter,PdfAdapter
+        - generic [ref=e119]: traduz
+        - generic [ref=e123]:
+          - heading "Adaptee" [level=3] [ref=e124]
+          - paragraph [ref=e125]: Arquivos e parsers de OFX, planilha e PDF
+      - generic [ref=e126]:
+        - generic [ref=e127]: Adapter Pattern
+        - generic [ref=e128]: 03 / 14
+    - 'group "Slide 4 de 14: Três entradas viram o mesmo objeto" [ref=e129]':
+      - heading "Três entradas viram o mesmo objeto" [level=1] [ref=e130]
+      - generic [ref=e133]:
+        - generic [ref=e134]:
+          - generic [ref=e135]: extrato.ofx
+          - generic [ref=e136]: "TRNAMT: -150.00 FITID: TX001"
+        - generic [ref=e137]:
+          - generic [ref=e138]: extrato.xlsx
+          - generic [ref=e139]: "Valor: 150,00 Tipo: Débito"
+        - generic [ref=e140]:
+          - generic [ref=e141]: extrato.pdf
+          - generic [ref=e142]: 05/10/2026 PAGAMENTO FORNECEDOR -150,00
+      - generic [ref=e143]:
+        - generic [ref=e144]: transaction.json
+        - generic [ref=e145]: "{ date: \"2026-10-05\", description: \"Pagamento fornecedor\", amount: 150, type: \"DEBIT\", externalId: \"TX001\", }"
+      - paragraph [ref=e146]: amount guarda sempre o valor absoluto; type diz se é crédito ou débito. É uma convenção do domínio, não do padrão.
+      - generic [ref=e147]:
+        - generic [ref=e148]: Adapter Pattern
+        - generic [ref=e149]: 04 / 14
+  - generic:
+    - navigation "Controles da apresentação":
+      - button "Anterior"
+      - generic: 4 / 14
+      - button "Próximo"
+      - button "Visão geral"
+      - button "Notas do apresentador"
+      - button "Ponteiro laser"
+      - button "Paleta de comandos"
+      - button "Exportar PDF"
+      - button "Tela cheia"
+    - complementary "Notas do apresentador" [ref=e84]:
+      - generic [ref=e85]:
+        - heading "Slide 4 de 14 · Três entradas viram o mesmo objeto" [level=5] [ref=e151]
+        - paragraph [ref=e87]: Os três exemplos representam a mesma movimentação. O objetivo do Adapter é que todos virem esse mesmo objeto Transaction.
+        - paragraph [ref=e88]: "Próximo: O modelo e o contrato"
+      - generic [ref=e89]:
+        - generic [ref=e90]: Tempo
+        - text: 15:33
+    - status: Ir para o slide 12 ↵
+    - generic [ref=e91]: "Slide 4 de 14: Três entradas viram o mesmo objeto"
