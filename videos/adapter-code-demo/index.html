@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #fbfbf9;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-e4mq" id="root" data-composition-id="main" data-start="0" data-duration="66" data-width="1920" data-height="1080">
+      <div data-hf-id="hf-4mw5" id="el-01-contrato" class="scene" data-composition-id="01-contrato" data-composition-src="compositions/frames/01-contrato.html" data-start="0" data-duration="9" data-track-index="1"></div>
+
+      <div data-hf-id="hf-54cg" id="el-02-ofx" class="scene" data-composition-id="02-ofx" data-composition-src="compositions/frames/02-ofx.html" data-start="9" data-duration="14" data-track-index="1"></div>
+
+      <div data-hf-id="hf-u233" id="el-03-excel" class="scene" data-composition-id="03-excel" data-composition-src="compositions/frames/03-excel.html" data-start="23" data-duration="12" data-track-index="1"></div>
+
+      <div data-hf-id="hf-qwmz" id="el-04-comparar" class="scene" data-composition-id="04-comparar" data-composition-src="compositions/frames/04-comparar.html" data-start="35" data-duration="10" data-track-index="1"></div>
+
+      <div data-hf-id="hf-lqne" id="el-05-csv" class="scene" data-composition-id="05-csv" data-composition-src="compositions/frames/05-csv.html" data-start="45" data-duration="21" data-track-index="1"></div>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

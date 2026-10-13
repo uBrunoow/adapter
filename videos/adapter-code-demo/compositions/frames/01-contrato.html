@@ -1,0 +1,104 @@
+<template>
+<style>
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-400.woff2") format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-500.woff2") format("woff2");font-weight:500;font-style:normal}
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-600.woff2") format("woff2");font-weight:600;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-400.woff2") format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-500.woff2") format("woff2");font-weight:500;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-700.woff2") format("woff2");font-weight:700;font-style:normal}
+
+#root{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;font-family:"Inter Tight",sans-serif;color:#17181b}
+.f1-bg{position:absolute;inset:0;background:#fbfbf9}
+.f1-stage{position:absolute;inset:0}
+.f1-title{position:absolute;left:0;top:0;width:1920px;height:48px;background:#e9e6e0;border-bottom:1px solid rgba(23,24,27,.08);display:flex;align-items:center;justify-content:center;font:500 19px "Inter Tight";color:#3d3b37}
+.f1-dots{position:absolute;left:22px;top:17px;display:flex;gap:9px}
+.f1-dots i{width:14px;height:14px;border-radius:50%;background:#d6d1ca}
+.f1-step{position:absolute;right:22px;top:9px;height:30px;padding:0 16px;border-radius:99px;background:#ff6a13;color:#17181b;display:flex;align-items:center;font:600 17px "Inter Tight"}
+.f1-side{position:absolute;left:0;top:48px;width:400px;height:998px;background:#f1efeb;border-right:1px solid rgba(23,24,27,.08)}
+.f1-sh{height:44px;padding:0 22px;display:flex;align-items:center;font:600 15px "Inter Tight";letter-spacing:.12em;text-transform:uppercase;color:#55534e}
+.f1-proj{height:34px;padding:0 14px;display:flex;align-items:center;font:600 15px "Inter Tight";letter-spacing:.04em;color:#3d3b37}
+.f1-tree{position:relative}
+.f1-xr{position:absolute;left:0;width:400px;height:36px;display:flex;align-items:center;gap:10px;font:400 20px "Inter Tight";color:#2a2b2f;white-space:nowrap}
+.f1-xr.on{background:rgba(255,106,19,.14);box-shadow:inset 3px 0 0 #ff6a13}
+.f1-xi{font-style:normal;font:700 12px "JetBrains Mono";width:22px;text-align:center;color:#6b6964}
+.f1-xi-ts{color:#2556c9}.f1-xi-d{font-size:16px;color:#55534e}
+.f1-bdg{margin-left:auto;margin-right:20px;font:700 17px "JetBrains Mono"}
+.f1-bdg.u{color:#157a3c}.f1-bdg.m{color:#7a4800}
+.f1-keep{margin-left:auto;margin-right:16px;padding:2px 10px;border-radius:99px;background:rgba(21,122,60,.12);color:#157a3c;font:600 15px "Inter Tight"}
+.f1-tabs{position:absolute;left:400px;top:48px;width:1520px;height:50px;background:#f1efeb;border-bottom:1px solid rgba(23,24,27,.08);display:flex}
+.f1-tab{display:flex;align-items:center;gap:10px;padding:0 24px;font:400 19px "Inter Tight";color:#6b6964;border-right:1px solid rgba(23,24,27,.06);white-space:nowrap}
+.f1-tab i{font:700 12px "JetBrains Mono";font-style:normal;color:#2556c9}
+.f1-tab.on{background:#fbfbf9;color:#17181b;box-shadow:inset 0 2px 0 #ff6a13}
+.f1-ed{position:absolute;left:400px;top:98px;width:1520px;height:948px;overflow:hidden;background:#fbfbf9}
+.f1-scroll{position:absolute;left:0;top:0;width:100%;padding-top:18px}
+.f1-row{position:relative;height:38px;display:flex;align-items:center;font:400 24px/38px "JetBrains Mono";white-space:pre;color:#1d1f23}
+.f1-no{flex:none;width:74px;padding-right:22px;text-align:right;color:#66625c;font-size:20px;position:relative;z-index:1}
+.f1-tx{position:relative;z-index:1;display:inline-block;overflow:hidden;white-space:pre;vertical-align:top}
+.f1-band{position:absolute;left:0;width:100%;height:38px;background:rgba(255,106,19,.15);box-shadow:inset 4px 0 0 #ff6a13;transform-origin:left center;opacity:0;z-index:0}
+.f1-add{position:absolute;left:0;top:0;width:100%;height:38px;background:rgba(21,122,60,.12);box-shadow:inset 4px 0 0 #157a3c;transform-origin:left center;z-index:0}
+.f1-k{color:#c2410c}.f1-t{color:#2556c9}.f1-s{color:#157a3c}.f1-n{color:#9a5b00}.f1-c{color:#8b8d92;font-style:italic}
+.f1-term{position:absolute;left:400px;top:590px;width:1520px;height:456px;background:#f3f2ee;border-top:1px solid rgba(23,24,27,.12);box-shadow:0 -18px 40px -30px rgba(60,40,20,.4);overflow:hidden;z-index:5}
+.f1-th{height:44px;display:flex;align-items:center;gap:30px;padding:0 26px;font:600 15px "Inter Tight";letter-spacing:.1em;text-transform:uppercase;color:#66625c;border-bottom:1px solid rgba(23,24,27,.07)}
+.f1-th .on{color:#17181b;box-shadow:0 13px 0 -11px #ff6a13}
+.f1-tb{position:absolute;left:0;top:44px;right:0;bottom:0;overflow:hidden}
+.f1-tsc{position:absolute;left:0;top:0;width:100%;padding:12px 28px}
+.f1-tl{height:30px;font:400 21px/30px "JetBrains Mono";white-space:pre;color:#1d1f23}
+.f1-pr{color:#157a3c;font-weight:500}
+.f1-ty{display:inline-block;overflow:hidden;vertical-align:top;white-space:pre}
+.f1-dim{color:#66625c}.f1-ok{color:#157a3c;font-weight:700}.f1-err{color:#b42318;font-weight:700}
+.f1-status{position:absolute;left:0;top:1046px;width:1920px;height:34px;background:#e9e6e0;border-top:1px solid rgba(23,24,27,.08);z-index:6;display:flex;align-items:center;gap:28px;padding:0 22px;font:500 16px "Inter Tight";color:#55534e}
+.f1-status b{margin-left:auto;font-weight:600;color:#17181b}
+
+</style>
+<div id="root" data-composition-id="01-contrato" data-width="1920" data-height="1080">
+  <div class="f1-bg clip" id="f1-bg" data-start="0" data-duration="9" data-track-index="0"></div>
+  <div class="f1-stage clip" id="f1-stage" data-start="0" data-duration="9" data-track-index="1">
+
+  <div class="f1-title"><span class="f1-dots"><i></i><i></i><i></i></span>adapter-importador-transacoes<span class="f1-step">O contrato (Target)</span></div>
+  <aside class="f1-side"><div class="f1-sh">Explorador</div><div class="f1-proj">▾ ADAPTER-IMPORTADOR-TRANSACOES</div><div class="f1-tree" id="f1-tree"><div class="f1-xr" id="f1-x-data" style="top:0px;padding-left:22px"><i class="f1-xi f1-xi-d">▾</i>data</div><div class="f1-xr" id="f1-x-data-extrato-csv" style="top:36px;padding-left:44px"><i class="f1-xi f1-xi-f">≡</i>extrato.csv</div><div class="f1-xr" id="f1-x-data-extrato-ofx" style="top:72px;padding-left:44px"><i class="f1-xi f1-xi-f">≡</i>extrato.ofx</div><div class="f1-xr" id="f1-x-data-extrato-xlsx" style="top:108px;padding-left:44px"><i class="f1-xi f1-xi-f">≡</i>extrato.xlsx</div><div class="f1-xr" id="f1-x-src" style="top:144px;padding-left:22px"><i class="f1-xi f1-xi-d">▾</i>src</div><div class="f1-xr" id="f1-x-src-adapters" style="top:180px;padding-left:44px"><i class="f1-xi f1-xi-d">▾</i>adapters</div><div class="f1-xr" id="f1-x-src-adapters-csv-adapter-ts" style="top:216px;padding-left:66px;opacity:0"><i class="f1-xi f1-xi-ts">TS</i>csv.adapter.ts</div><div class="f1-xr" id="f1-x-src-adapters-excel-adapter-ts" style="top:216px;padding-left:66px"><i class="f1-xi f1-xi-ts">TS</i>excel.adapter.ts</div><div class="f1-xr" id="f1-x-src-adapters-ofx-adapter-ts" style="top:252px;padding-left:66px"><i class="f1-xi f1-xi-ts">TS</i>ofx.adapter.ts</div><div class="f1-xr" id="f1-x-src-adapter-resolver-ts" style="top:288px;padding-left:44px"><i class="f1-xi f1-xi-ts">TS</i>adapter-resolver.ts</div><div class="f1-xr" id="f1-x-src-comparar-ts" style="top:324px;padding-left:44px"><i class="f1-xi f1-xi-ts">TS</i>comparar.ts</div><div class="f1-xr" id="f1-x-src-import-file-ts" style="top:360px;padding-left:44px"><i class="f1-xi f1-xi-ts">TS</i>import-file.ts</div><div class="f1-xr" id="f1-x-src-main-ts" style="top:396px;padding-left:44px"><i class="f1-xi f1-xi-ts">TS</i>main.ts</div><div class="f1-xr" id="f1-x-src-transaction-file-adapter-ts" style="top:432px;padding-left:44px"><i class="f1-xi f1-xi-ts">TS</i>transaction-file-adapter.ts</div><div class="f1-xr" id="f1-x-src-transaction-import-service-ts" style="top:468px;padding-left:44px"><i class="f1-xi f1-xi-ts">TS</i>transaction-import-service.ts</div><div class="f1-xr" id="f1-x-src-transaction-ts" style="top:504px;padding-left:44px"><i class="f1-xi f1-xi-ts">TS</i>transaction.ts</div><div class="f1-xr" id="f1-x-package-json" style="top:540px;padding-left:22px"><i class="f1-xi f1-xi-f">{}</i>package.json</div></div></aside>
+  <div class="f1-tabs" id="f1-tabA"><span class="f1-tab on"><i>TS</i>transaction.ts</span></div><div class="f1-tabs" id="f1-tabB"><span class="f1-tab"><i>TS</i>transaction.ts</span><span class="f1-tab on"><i>TS</i>transaction-file-adapter.ts</span></div>
+  <div class="f1-ed" id="f1-m"><div class="f1-scroll" id="f1-m-sc"><i class="f1-band" id="f1-m-band"></i><div class="f1-row" id="f1-m-r0"><span class="f1-no">1</span><span class="f1-tx" id="f1-m-t0" style="--n:49"><span class="f1-k">export</span> <span class="f1-k">type</span> <span class="f1-t">TransactionType</span> = <span class="f1-s">"CREDIT"</span> | <span class="f1-s">"DEBIT"</span>;</span></div><div class="f1-row" id="f1-m-r1"><span class="f1-no">2</span><span class="f1-tx" id="f1-m-t1" style="--n:0"></span></div><div class="f1-row" id="f1-m-r2"><span class="f1-no">3</span><span class="f1-tx" id="f1-m-t2" style="--n:30"><span class="f1-k">export</span> <span class="f1-k">interface</span> <span class="f1-t">Transaction</span> {</span></div><div class="f1-row" id="f1-m-r3"><span class="f1-no">4</span><span class="f1-tx" id="f1-m-t3" style="--n:15">  date: <span class="f1-t">string</span>;</span></div><div class="f1-row" id="f1-m-r4"><span class="f1-no">5</span><span class="f1-tx" id="f1-m-t4" style="--n:22">  description: <span class="f1-t">string</span>;</span></div><div class="f1-row" id="f1-m-r5"><span class="f1-no">6</span><span class="f1-tx" id="f1-m-t5" style="--n:17">  amount: <span class="f1-t">number</span>;</span></div><div class="f1-row" id="f1-m-r6"><span class="f1-no">7</span><span class="f1-tx" id="f1-m-t6" style="--n:24">  <span class="f1-k">type</span>: <span class="f1-t">TransactionType</span>;</span></div><div class="f1-row" id="f1-m-r7"><span class="f1-no">8</span><span class="f1-tx" id="f1-m-t7" style="--n:1">}</span></div></div></div><div class="f1-ed" id="f1-g"><div class="f1-scroll" id="f1-g-sc"><i class="f1-band" id="f1-g-band"></i><div class="f1-row" id="f1-g-r0"><span class="f1-no">1</span><span class="f1-tx" id="f1-g-t0" style="--n:52"><span class="f1-k">import</span> <span class="f1-k">type</span> { <span class="f1-t">Transaction</span> } <span class="f1-k">from</span> <span class="f1-s">"./transaction.ts"</span>;</span></div><div class="f1-row" id="f1-g-r1"><span class="f1-no">2</span><span class="f1-tx" id="f1-g-t1" style="--n:0"></span></div><div class="f1-row" id="f1-g-r2"><span class="f1-no">3</span><span class="f1-tx" id="f1-g-t2" style="--n:47"><span class="f1-c">// Target: o contrato que todo adaptador cumpre</span></span></div><div class="f1-row" id="f1-g-r3"><span class="f1-no">4</span><span class="f1-tx" id="f1-g-t3" style="--n:41"><span class="f1-k">export</span> <span class="f1-k">interface</span> <span class="f1-t">TransactionFileAdapter</span> {</span></div><div class="f1-row" id="f1-g-r4"><span class="f1-no">5</span><span class="f1-tx" id="f1-g-t4" style="--n:49">  parse(content: <span class="f1-t">Buffer</span>): <span class="f1-t">Promise</span>&lt;<span class="f1-t">Transaction</span>[]&gt;;</span></div><div class="f1-row" id="f1-g-r5"><span class="f1-no">6</span><span class="f1-tx" id="f1-g-t5" style="--n:1">}</span></div></div></div>
+  <div class="f1-status"><span>⎇ main</span><span>TypeScript</span><span>UTF-8</span><b id="f1-sr">modelo e interface</b></div>
+  </div>
+</div>
+<script>
+(function () {
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+  const E = "power3.out";
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  // digita: largura em ch, em degraus (determinístico)
+  const type = (id, at, dur, row) => {
+    const el = $(id);
+    if (row) { gsap.set(el.parentNode, { opacity: 0 }); tl.set(el.parentNode, { opacity: 1 }, at); }
+    const n = Math.max(1, +getComputedStyle(el).getPropertyValue("--n"));
+    tl.fromTo(el, { width: "0ch" }, { width: n + "ch", duration: dur, ease: "steps(" + n + ")" }, at);
+  };
+  // mostra um arquivo inteiro de uma vez, linha a linha (como ao abrir)
+  const open = (eid, at) => tl.fromTo($$(eid + " ." + "f1-row"), { opacity: 0 }, { opacity: 1, duration: 0.18, stagger: 0.025, ease: "power1.out" }, at);
+  // faixa de destaque na linha i (0-based) do editor eid
+  const band = (eid, i, at, n = 1) => {
+    tl.set(eid + "-band", { top: 18 + i * 38, height: n * 38 }, at);
+    tl.fromTo(eid + "-band", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.4, ease: "power2.inOut" }, at);
+  };
+  const termUp = (at) => tl.fromTo("#f1-term", { y: 516 }, { y: 0, duration: 0.6, ease: E }, at);
+  const termDown = (at) => tl.to("#f1-term", { y: 516, duration: 0.5, ease: "power2.in" }, at);
+  const scroll = (eid, lines, at) => tl.to(eid + "-sc", { y: -lines * 38, duration: 0.6, ease: E }, at);
+  const output = (bid, at) => tl.fromTo("." + bid + "-o", { opacity: 0 }, { opacity: 1, duration: 0.05, stagger: 0.035 }, at);
+  const cut = (hide, show, at) => { if (hide) tl.set(hide, { opacity: 0 }, at); tl.set(show, { opacity: 1 }, at); };
+
+  gsap.set("#f1-x-src-transaction-ts", { className: "f1-xr on" });
+  gsap.set(["#f1-tabB", "#f1-g"], { opacity: 0 });
+  open("#f1-m", 0.3);
+  band("#f1-m", 2, 1.4, 6);
+  cut("#f1-tabA", "#f1-tabB", 3.4); cut("#f1-m", "#f1-g", 3.4);
+  tl.set("#f1-x-src-transaction-ts", { className: "f1-xr" }, 3.4); tl.set("#f1-x-src-transaction-file-adapter-ts", { className: "f1-xr on" }, 3.4);
+  type("#f1-g-t0", 3.600, 1.144, true); type("#f1-g-t1", 4.744, 0.050, true); type("#f1-g-t2", 4.744, 1.034, true); type("#f1-g-t3", 5.778, 0.902, true); type("#f1-g-t4", 6.680, 1.078, true); type("#f1-g-t5", 7.758, 0.050, true);
+  band("#f1-g", 4, 6.4);
+
+  tl.set({}, {}, 9);
+  window.__timelines["01-contrato"] = tl;
+})();
+</script>
+</template>

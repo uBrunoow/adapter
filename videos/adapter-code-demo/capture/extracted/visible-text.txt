@@ -1,0 +1,60 @@
+Demonstração do padrão Adapter num importador de transações financeiras (TypeScript).
+
+Roteiro do slide "Veja o código rodando":
+1. Importar um arquivo OFX
+2. A mesma transação em Excel
+3. Comparar as duas saídas
+4. Adicionar um formato novo
+
+Código do projeto:
+
+interface Transaction { date: string; description: string; amount: number; type: "CREDIT" | "DEBIT"; externalId?: string; }
+
+// Target
+interface TransactionFileAdapter { parse(content: Buffer): Promise<Transaction[]>; }
+
+class OfxAdapter implements TransactionFileAdapter {
+  async parse(content: Buffer): Promise<Transaction[]> {
+    const entries = await parseOfxFile(content);
+    return entries.map((entry) => ({
+      date: normalizeOfxDate(entry.DTPOSTED),
+      description: entry.MEMO,
+      amount: Math.abs(Number(entry.TRNAMT)),
+      type: Number(entry.TRNAMT) < 0 ? "DEBIT" : "CREDIT",
+      externalId: entry.FITID,
+    }));
+  }
+}
+
+class ExcelAdapter implements TransactionFileAdapter {
+  async parse(content: Buffer) {
+    const rows = await parseExcelFile(content);
+    return rows.map((row) => ({
+      date: normalizeExcelDate(row["Data"]),
+      description: row["Histórico"],
+      amount: Math.abs(parseMoney(row["Valor"])),
+      type: normalizeTransactionType(row["Tipo"]),
+    }));
+  }
+}
+
+// Client
+class TransactionImportService {
+  async import(content: Buffer, adapter: TransactionFileAdapter): Promise<Transaction[]> {
+    const transactions = await adapter.parse(content);
+    this.validate(transactions);
+    // deduplicação, regras de negócio, persistência
+    return transactions;
+  }
+}
+
+const adapters: Record<string, TransactionFileAdapter> = { ofx: new OfxAdapter(), xlsx: new ExcelAdapter(), pdf: new PdfAdapter() };
+
+Entradas de exemplo (mesma movimentação):
+extrato.ofx  → TRNAMT: -150.00, FITID: TX001, DTPOSTED 20261005, MEMO Pagamento fornecedor
+extrato.xlsx → Data 05/10/2026, Histórico Pagamento fornecedor, Valor 150,00, Tipo Débito
+Saída: { date: "2026-10-05", description: "Pagamento fornecedor", amount: 150, type: "DEBIT" }
+
+Terminal: importFile("csv", csvBuffer) → ✗ Error: Formato não suportado.
+Formato novo: class CsvAdapter implements TransactionFileAdapter { ... } + adapters.csv = new CsvAdapter(); o TransactionImportService não muda.
+Mensagem: o serviço só conhece a interface; cada formato é um adaptador.

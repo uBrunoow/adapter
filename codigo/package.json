@@ -1,0 +1,18 @@
+{
+  "name": "adapter-importador-transacoes",
+  "private": true,
+  "type": "module",
+  "description": "Exemplo do padrão Adapter: importar extratos OFX, Excel e CSV para o mesmo modelo Transaction.",
+  "scripts": {
+    "importar": "tsx src/main.ts",
+    "comparar": "tsx src/comparar.ts"
+  },
+  "dependencies": {
+    "xlsx": "0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}

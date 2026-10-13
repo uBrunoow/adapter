@@ -1,0 +1,106 @@
+<template>
+<style>
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-400.woff2") format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-500.woff2") format("woff2");font-weight:500;font-style:normal}
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-600.woff2") format("woff2");font-weight:600;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-400.woff2") format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-500.woff2") format("woff2");font-weight:500;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-700.woff2") format("woff2");font-weight:700;font-style:normal}
+
+#root{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;font-family:"Inter Tight",sans-serif;color:#17181b}
+.f4-bg{position:absolute;inset:0;background:#fbfbf9}
+.f4-stage{position:absolute;inset:0}
+.f4-title{position:absolute;left:0;top:0;width:1920px;height:48px;background:#e9e6e0;border-bottom:1px solid rgba(23,24,27,.08);display:flex;align-items:center;justify-content:center;font:500 19px "Inter Tight";color:#3d3b37}
+.f4-dots{position:absolute;left:22px;top:17px;display:flex;gap:9px}
+.f4-dots i{width:14px;height:14px;border-radius:50%;background:#d6d1ca}
+.f4-step{position:absolute;right:22px;top:9px;height:30px;padding:0 16px;border-radius:99px;background:#ff6a13;color:#17181b;display:flex;align-items:center;font:600 17px "Inter Tight"}
+.f4-side{position:absolute;left:0;top:48px;width:400px;height:998px;background:#f1efeb;border-right:1px solid rgba(23,24,27,.08)}
+.f4-sh{height:44px;padding:0 22px;display:flex;align-items:center;font:600 15px "Inter Tight";letter-spacing:.12em;text-transform:uppercase;color:#55534e}
+.f4-proj{height:34px;padding:0 14px;display:flex;align-items:center;font:600 15px "Inter Tight";letter-spacing:.04em;color:#3d3b37}
+.f4-tree{position:relative}
+.f4-xr{position:absolute;left:0;width:400px;height:36px;display:flex;align-items:center;gap:10px;font:400 20px "Inter Tight";color:#2a2b2f;white-space:nowrap}
+.f4-xr.on{background:rgba(255,106,19,.14);box-shadow:inset 3px 0 0 #ff6a13}
+.f4-xi{font-style:normal;font:700 12px "JetBrains Mono";width:22px;text-align:center;color:#6b6964}
+.f4-xi-ts{color:#2556c9}.f4-xi-d{font-size:16px;color:#55534e}
+.f4-bdg{margin-left:auto;margin-right:20px;font:700 17px "JetBrains Mono"}
+.f4-bdg.u{color:#157a3c}.f4-bdg.m{color:#7a4800}
+.f4-keep{margin-left:auto;margin-right:16px;padding:2px 10px;border-radius:99px;background:rgba(21,122,60,.12);color:#157a3c;font:600 15px "Inter Tight"}
+.f4-tabs{position:absolute;left:400px;top:48px;width:1520px;height:50px;background:#f1efeb;border-bottom:1px solid rgba(23,24,27,.08);display:flex}
+.f4-tab{display:flex;align-items:center;gap:10px;padding:0 24px;font:400 19px "Inter Tight";color:#6b6964;border-right:1px solid rgba(23,24,27,.06);white-space:nowrap}
+.f4-tab i{font:700 12px "JetBrains Mono";font-style:normal;color:#2556c9}
+.f4-tab.on{background:#fbfbf9;color:#17181b;box-shadow:inset 0 2px 0 #ff6a13}
+.f4-ed{position:absolute;left:400px;top:98px;width:1520px;height:948px;overflow:hidden;background:#fbfbf9}
+.f4-scroll{position:absolute;left:0;top:0;width:100%;padding-top:18px}
+.f4-row{position:relative;height:38px;display:flex;align-items:center;font:400 24px/38px "JetBrains Mono";white-space:pre;color:#1d1f23}
+.f4-no{flex:none;width:74px;padding-right:22px;text-align:right;color:#66625c;font-size:20px;position:relative;z-index:1}
+.f4-tx{position:relative;z-index:1;display:inline-block;overflow:hidden;white-space:pre;vertical-align:top}
+.f4-band{position:absolute;left:0;width:100%;height:38px;background:rgba(255,106,19,.15);box-shadow:inset 4px 0 0 #ff6a13;transform-origin:left center;opacity:0;z-index:0}
+.f4-add{position:absolute;left:0;top:0;width:100%;height:38px;background:rgba(21,122,60,.12);box-shadow:inset 4px 0 0 #157a3c;transform-origin:left center;z-index:0}
+.f4-k{color:#c2410c}.f4-t{color:#2556c9}.f4-s{color:#157a3c}.f4-n{color:#9a5b00}.f4-c{color:#8b8d92;font-style:italic}
+.f4-term{position:absolute;left:400px;top:590px;width:1520px;height:456px;background:#f3f2ee;border-top:1px solid rgba(23,24,27,.12);box-shadow:0 -18px 40px -30px rgba(60,40,20,.4);overflow:hidden;z-index:5}
+.f4-th{height:44px;display:flex;align-items:center;gap:30px;padding:0 26px;font:600 15px "Inter Tight";letter-spacing:.1em;text-transform:uppercase;color:#66625c;border-bottom:1px solid rgba(23,24,27,.07)}
+.f4-th .on{color:#17181b;box-shadow:0 13px 0 -11px #ff6a13}
+.f4-tb{position:absolute;left:0;top:44px;right:0;bottom:0;overflow:hidden}
+.f4-tsc{position:absolute;left:0;top:0;width:100%;padding:12px 28px}
+.f4-tl{height:30px;font:400 21px/30px "JetBrains Mono";white-space:pre;color:#1d1f23}
+.f4-pr{color:#157a3c;font-weight:500}
+.f4-ty{display:inline-block;overflow:hidden;vertical-align:top;white-space:pre}
+.f4-dim{color:#66625c}.f4-ok{color:#157a3c;font-weight:700}.f4-err{color:#b42318;font-weight:700}
+.f4-status{position:absolute;left:0;top:1046px;width:1920px;height:34px;background:#e9e6e0;border-top:1px solid rgba(23,24,27,.08);z-index:6;display:flex;align-items:center;gap:28px;padding:0 22px;font:500 16px "Inter Tight";color:#55534e}
+.f4-status b{margin-left:auto;font-weight:600;color:#17181b}
+
+</style>
+<div id="root" data-composition-id="04-comparar" data-width="1920" data-height="1080">
+  <div class="f4-bg clip" id="f4-bg" data-start="0" data-duration="10" data-track-index="0"></div>
+  <div class="f4-stage clip" id="f4-stage" data-start="0" data-duration="10" data-track-index="1">
+
+  <div class="f4-title"><span class="f4-dots"><i></i><i></i><i></i></span>adapter-importador-transacoes<span class="f4-step">Passo 3 · Comparar</span></div>
+  <aside class="f4-side"><div class="f4-sh">Explorador</div><div class="f4-proj">▾ ADAPTER-IMPORTADOR-TRANSACOES</div><div class="f4-tree" id="f4-tree"><div class="f4-xr" id="f4-x-data" style="top:0px;padding-left:22px"><i class="f4-xi f4-xi-d">▾</i>data</div><div class="f4-xr" id="f4-x-data-extrato-csv" style="top:36px;padding-left:44px"><i class="f4-xi f4-xi-f">≡</i>extrato.csv</div><div class="f4-xr" id="f4-x-data-extrato-ofx" style="top:72px;padding-left:44px"><i class="f4-xi f4-xi-f">≡</i>extrato.ofx</div><div class="f4-xr" id="f4-x-data-extrato-xlsx" style="top:108px;padding-left:44px"><i class="f4-xi f4-xi-f">≡</i>extrato.xlsx</div><div class="f4-xr" id="f4-x-src" style="top:144px;padding-left:22px"><i class="f4-xi f4-xi-d">▾</i>src</div><div class="f4-xr" id="f4-x-src-adapters" style="top:180px;padding-left:44px"><i class="f4-xi f4-xi-d">▾</i>adapters</div><div class="f4-xr" id="f4-x-src-adapters-csv-adapter-ts" style="top:216px;padding-left:66px;opacity:0"><i class="f4-xi f4-xi-ts">TS</i>csv.adapter.ts</div><div class="f4-xr" id="f4-x-src-adapters-excel-adapter-ts" style="top:216px;padding-left:66px"><i class="f4-xi f4-xi-ts">TS</i>excel.adapter.ts</div><div class="f4-xr" id="f4-x-src-adapters-ofx-adapter-ts" style="top:252px;padding-left:66px"><i class="f4-xi f4-xi-ts">TS</i>ofx.adapter.ts</div><div class="f4-xr" id="f4-x-src-adapter-resolver-ts" style="top:288px;padding-left:44px"><i class="f4-xi f4-xi-ts">TS</i>adapter-resolver.ts</div><div class="f4-xr" id="f4-x-src-comparar-ts" style="top:324px;padding-left:44px"><i class="f4-xi f4-xi-ts">TS</i>comparar.ts</div><div class="f4-xr" id="f4-x-src-import-file-ts" style="top:360px;padding-left:44px"><i class="f4-xi f4-xi-ts">TS</i>import-file.ts</div><div class="f4-xr" id="f4-x-src-main-ts" style="top:396px;padding-left:44px"><i class="f4-xi f4-xi-ts">TS</i>main.ts</div><div class="f4-xr" id="f4-x-src-transaction-file-adapter-ts" style="top:432px;padding-left:44px"><i class="f4-xi f4-xi-ts">TS</i>transaction-file-adapter.ts</div><div class="f4-xr" id="f4-x-src-transaction-import-service-ts" style="top:468px;padding-left:44px"><i class="f4-xi f4-xi-ts">TS</i>transaction-import-service.ts</div><div class="f4-xr" id="f4-x-src-transaction-ts" style="top:504px;padding-left:44px"><i class="f4-xi f4-xi-ts">TS</i>transaction.ts</div><div class="f4-xr" id="f4-x-package-json" style="top:540px;padding-left:22px"><i class="f4-xi f4-xi-f">{}</i>package.json</div></div></aside>
+  <div class="f4-tabs" id="f4-tab"><span class="f4-tab"><i>TS</i>excel.adapter.ts</span><span class="f4-tab on"><i>TS</i>transaction-import-service.ts</span></div>
+  <div class="f4-ed" id="f4-e"><div class="f4-scroll" id="f4-e-sc"><i class="f4-band" id="f4-e-band"></i><div class="f4-row" id="f4-e-r0"><span class="f4-no">1</span><span class="f4-tx" id="f4-e-t0" style="--n:52"><span class="f4-k">import</span> <span class="f4-k">type</span> { <span class="f4-t">Transaction</span> } <span class="f4-k">from</span> <span class="f4-s">"./transaction.ts"</span>;</span></div><div class="f4-row" id="f4-e-r1"><span class="f4-no">2</span><span class="f4-tx" id="f4-e-t1" style="--n:76"><span class="f4-k">import</span> <span class="f4-k">type</span> { <span class="f4-t">TransactionFileAdapter</span> } <span class="f4-k">from</span> <span class="f4-s">"./transaction-file-adapter.ts"</span>;</span></div><div class="f4-row" id="f4-e-r2"><span class="f4-no">3</span><span class="f4-tx" id="f4-e-t2" style="--n:0"></span></div><div class="f4-row" id="f4-e-r3"><span class="f4-no">4</span><span class="f4-tx" id="f4-e-t3" style="--n:61"><span class="f4-c">// Client: só conhece a interface, nunca o formato do arquivo</span></span></div><div class="f4-row" id="f4-e-r4"><span class="f4-no">5</span><span class="f4-tx" id="f4-e-t4" style="--n:39"><span class="f4-k">export</span> <span class="f4-k">class</span> <span class="f4-t">TransactionImportService</span> {</span></div><div class="f4-row" id="f4-e-r5"><span class="f4-no">6</span><span class="f4-tx" id="f4-e-t5" style="--n:90">  <span class="f4-k">async</span> <span class="f4-k">import</span>(content: <span class="f4-t">Buffer</span>, adapter: <span class="f4-t">TransactionFileAdapter</span>): <span class="f4-t">Promise</span>&lt;<span class="f4-t">Transaction</span>[]&gt; {</span></div><div class="f4-row" id="f4-e-r6"><span class="f4-no">7</span><span class="f4-tx" id="f4-e-t6" style="--n:54">    <span class="f4-k">const</span> transactions = <span class="f4-k">await</span> adapter.parse(content);</span></div><div class="f4-row" id="f4-e-r7"><span class="f4-no">8</span><span class="f4-tx" id="f4-e-t7" style="--n:59">    <span class="f4-c">// validação, deduplicação e persistência ficariam aqui</span></span></div><div class="f4-row" id="f4-e-r8"><span class="f4-no">9</span><span class="f4-tx" id="f4-e-t8" style="--n:24">    <span class="f4-k">return</span> transactions;</span></div><div class="f4-row" id="f4-e-r9"><span class="f4-no">10</span><span class="f4-tx" id="f4-e-t9" style="--n:3">  }</span></div><div class="f4-row" id="f4-e-r10"><span class="f4-no">11</span><span class="f4-tx" id="f4-e-t10" style="--n:1">}</span></div></div></div><section class="f4-term" id="f4-term"><div class="f4-th"><span class="on">Terminal</span><span>Problemas</span><span>Saída</span></div><div class="f4-tb"><div class="f4-tsc" id="f4-tsc" data-layout-allow-overflow><div class="f4-tl" id="f4b-c"><span class="f4-pr">~/codigo $ </span><span class="f4-ty" id="f4b-ty" style="--n:16">npm run comparar</span></div><div class="f4-tl f4b-o" id="f4b-o0"><span class="f4-dim">&gt; comparar</span></div><div class="f4-tl f4b-o" id="f4b-o1"><span class="f4-dim">&gt; tsx src/comparar.ts</span></div><div class="f4-tl f4b-o" id="f4b-o2">&nbsp;</div><div class="f4-tl f4b-o" id="f4b-o3">OFX:   {</div><div class="f4-tl f4b-o" id="f4b-o4">  date: <span class="f4-s">'2026-10-05'</span>,</div><div class="f4-tl f4b-o" id="f4b-o5">  description: <span class="f4-s">'Pagamento fornecedor'</span>,</div><div class="f4-tl f4b-o" id="f4b-o6">  amount: <span class="f4-n">150</span>,</div><div class="f4-tl f4b-o" id="f4b-o7">  type: <span class="f4-s">'DEBIT'</span></div><div class="f4-tl f4b-o" id="f4b-o8">}</div><div class="f4-tl f4b-o" id="f4b-o9">Excel: {</div><div class="f4-tl f4b-o" id="f4b-o10">  date: <span class="f4-s">'2026-10-05'</span>,</div><div class="f4-tl f4b-o" id="f4b-o11">  description: <span class="f4-s">'Pagamento fornecedor'</span>,</div><div class="f4-tl f4b-o" id="f4b-o12">  amount: <span class="f4-n">150</span>,</div><div class="f4-tl f4b-o" id="f4b-o13">  type: <span class="f4-s">'DEBIT'</span></div><div class="f4-tl f4b-o" id="f4b-o14">}</div><div class="f4-tl f4b-o" id="f4b-o15"><span class="f4-ok">✓ mesmo objeto Transaction</span></div></div></div></section>
+  <div class="f4-status"><span>⎇ main</span><span>TypeScript</span><span>UTF-8</span><b id="f4-sr">Client: só conhece a interface</b></div>
+  </div>
+</div>
+<script>
+(function () {
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+  const E = "power3.out";
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  // digita: largura em ch, em degraus (determinístico)
+  const type = (id, at, dur, row) => {
+    const el = $(id);
+    if (row) { gsap.set(el.parentNode, { opacity: 0 }); tl.set(el.parentNode, { opacity: 1 }, at); }
+    const n = Math.max(1, +getComputedStyle(el).getPropertyValue("--n"));
+    tl.fromTo(el, { width: "0ch" }, { width: n + "ch", duration: dur, ease: "steps(" + n + ")" }, at);
+  };
+  // mostra um arquivo inteiro de uma vez, linha a linha (como ao abrir)
+  const open = (eid, at) => tl.fromTo($$(eid + " ." + "f4-row"), { opacity: 0 }, { opacity: 1, duration: 0.18, stagger: 0.025, ease: "power1.out" }, at);
+  // faixa de destaque na linha i (0-based) do editor eid
+  const band = (eid, i, at, n = 1) => {
+    tl.set(eid + "-band", { top: 18 + i * 38, height: n * 38 }, at);
+    tl.fromTo(eid + "-band", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.4, ease: "power2.inOut" }, at);
+  };
+  const termUp = (at) => tl.fromTo("#f4-term", { y: 516 }, { y: 0, duration: 0.6, ease: E }, at);
+  const termDown = (at) => tl.to("#f4-term", { y: 516, duration: 0.5, ease: "power2.in" }, at);
+  const scroll = (eid, lines, at) => tl.to(eid + "-sc", { y: -lines * 38, duration: 0.6, ease: E }, at);
+  const output = (bid, at) => tl.fromTo("." + bid + "-o", { opacity: 0 }, { opacity: 1, duration: 0.05, stagger: 0.035 }, at);
+  const cut = (hide, show, at) => { if (hide) tl.set(hide, { opacity: 0 }, at); tl.set(show, { opacity: 1 }, at); };
+
+  gsap.set("#f4-x-src-transaction-import-service-ts", { className: "f4-xr on" });
+  gsap.set("#f4-term", { y: 516 });
+  open("#f4-e", 0.2);
+  band("#f4-e", 3, 1.0);
+  band("#f4-e", 6, 2.2);
+  termUp(3.8);
+  type("#f4b-ty", 4.4, 0.48);
+  output("f4b", 5.4);
+  tl.to("#f4-tsc", { y: -120, duration: 0.5, ease: E }, 6.4);
+  tl.fromTo("#f4b-o15", { backgroundColor: "rgba(21,122,60,0)" }, { backgroundColor: "rgba(21,122,60,.14)", duration: 0.4 }, 6.8);
+
+  tl.set({}, {}, 10);
+  window.__timelines["04-comparar"] = tl;
+})();
+</script>
+</template>

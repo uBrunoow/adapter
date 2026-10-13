@@ -1,0 +1,105 @@
+<template>
+<style>
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-400.woff2") format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-500.woff2") format("woff2");font-weight:500;font-style:normal}
+@font-face{font-family:"Inter Tight";src:url("../../assets/fonts/InterTight-600.woff2") format("woff2");font-weight:600;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-400.woff2") format("woff2");font-weight:400;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-500.woff2") format("woff2");font-weight:500;font-style:normal}
+@font-face{font-family:"JetBrains Mono";src:url("../../assets/fonts/JetBrainsMono-700.woff2") format("woff2");font-weight:700;font-style:normal}
+
+#root{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;font-family:"Inter Tight",sans-serif;color:#17181b}
+.f2-bg{position:absolute;inset:0;background:#fbfbf9}
+.f2-stage{position:absolute;inset:0}
+.f2-title{position:absolute;left:0;top:0;width:1920px;height:48px;background:#e9e6e0;border-bottom:1px solid rgba(23,24,27,.08);display:flex;align-items:center;justify-content:center;font:500 19px "Inter Tight";color:#3d3b37}
+.f2-dots{position:absolute;left:22px;top:17px;display:flex;gap:9px}
+.f2-dots i{width:14px;height:14px;border-radius:50%;background:#d6d1ca}
+.f2-step{position:absolute;right:22px;top:9px;height:30px;padding:0 16px;border-radius:99px;background:#ff6a13;color:#17181b;display:flex;align-items:center;font:600 17px "Inter Tight"}
+.f2-side{position:absolute;left:0;top:48px;width:400px;height:998px;background:#f1efeb;border-right:1px solid rgba(23,24,27,.08)}
+.f2-sh{height:44px;padding:0 22px;display:flex;align-items:center;font:600 15px "Inter Tight";letter-spacing:.12em;text-transform:uppercase;color:#55534e}
+.f2-proj{height:34px;padding:0 14px;display:flex;align-items:center;font:600 15px "Inter Tight";letter-spacing:.04em;color:#3d3b37}
+.f2-tree{position:relative}
+.f2-xr{position:absolute;left:0;width:400px;height:36px;display:flex;align-items:center;gap:10px;font:400 20px "Inter Tight";color:#2a2b2f;white-space:nowrap}
+.f2-xr.on{background:rgba(255,106,19,.14);box-shadow:inset 3px 0 0 #ff6a13}
+.f2-xi{font-style:normal;font:700 12px "JetBrains Mono";width:22px;text-align:center;color:#6b6964}
+.f2-xi-ts{color:#2556c9}.f2-xi-d{font-size:16px;color:#55534e}
+.f2-bdg{margin-left:auto;margin-right:20px;font:700 17px "JetBrains Mono"}
+.f2-bdg.u{color:#157a3c}.f2-bdg.m{color:#7a4800}
+.f2-keep{margin-left:auto;margin-right:16px;padding:2px 10px;border-radius:99px;background:rgba(21,122,60,.12);color:#157a3c;font:600 15px "Inter Tight"}
+.f2-tabs{position:absolute;left:400px;top:48px;width:1520px;height:50px;background:#f1efeb;border-bottom:1px solid rgba(23,24,27,.08);display:flex}
+.f2-tab{display:flex;align-items:center;gap:10px;padding:0 24px;font:400 19px "Inter Tight";color:#6b6964;border-right:1px solid rgba(23,24,27,.06);white-space:nowrap}
+.f2-tab i{font:700 12px "JetBrains Mono";font-style:normal;color:#2556c9}
+.f2-tab.on{background:#fbfbf9;color:#17181b;box-shadow:inset 0 2px 0 #ff6a13}
+.f2-ed{position:absolute;left:400px;top:98px;width:1520px;height:948px;overflow:hidden;background:#fbfbf9}
+.f2-scroll{position:absolute;left:0;top:0;width:100%;padding-top:18px}
+.f2-row{position:relative;height:38px;display:flex;align-items:center;font:400 24px/38px "JetBrains Mono";white-space:pre;color:#1d1f23}
+.f2-no{flex:none;width:74px;padding-right:22px;text-align:right;color:#66625c;font-size:20px;position:relative;z-index:1}
+.f2-tx{position:relative;z-index:1;display:inline-block;overflow:hidden;white-space:pre;vertical-align:top}
+.f2-band{position:absolute;left:0;width:100%;height:38px;background:rgba(255,106,19,.15);box-shadow:inset 4px 0 0 #ff6a13;transform-origin:left center;opacity:0;z-index:0}
+.f2-add{position:absolute;left:0;top:0;width:100%;height:38px;background:rgba(21,122,60,.12);box-shadow:inset 4px 0 0 #157a3c;transform-origin:left center;z-index:0}
+.f2-k{color:#c2410c}.f2-t{color:#2556c9}.f2-s{color:#157a3c}.f2-n{color:#9a5b00}.f2-c{color:#8b8d92;font-style:italic}
+.f2-term{position:absolute;left:400px;top:590px;width:1520px;height:456px;background:#f3f2ee;border-top:1px solid rgba(23,24,27,.12);box-shadow:0 -18px 40px -30px rgba(60,40,20,.4);overflow:hidden;z-index:5}
+.f2-th{height:44px;display:flex;align-items:center;gap:30px;padding:0 26px;font:600 15px "Inter Tight";letter-spacing:.1em;text-transform:uppercase;color:#66625c;border-bottom:1px solid rgba(23,24,27,.07)}
+.f2-th .on{color:#17181b;box-shadow:0 13px 0 -11px #ff6a13}
+.f2-tb{position:absolute;left:0;top:44px;right:0;bottom:0;overflow:hidden}
+.f2-tsc{position:absolute;left:0;top:0;width:100%;padding:12px 28px}
+.f2-tl{height:30px;font:400 21px/30px "JetBrains Mono";white-space:pre;color:#1d1f23}
+.f2-pr{color:#157a3c;font-weight:500}
+.f2-ty{display:inline-block;overflow:hidden;vertical-align:top;white-space:pre}
+.f2-dim{color:#66625c}.f2-ok{color:#157a3c;font-weight:700}.f2-err{color:#b42318;font-weight:700}
+.f2-status{position:absolute;left:0;top:1046px;width:1920px;height:34px;background:#e9e6e0;border-top:1px solid rgba(23,24,27,.08);z-index:6;display:flex;align-items:center;gap:28px;padding:0 22px;font:500 16px "Inter Tight";color:#55534e}
+.f2-status b{margin-left:auto;font-weight:600;color:#17181b}
+
+</style>
+<div id="root" data-composition-id="02-ofx" data-width="1920" data-height="1080">
+  <div class="f2-bg clip" id="f2-bg" data-start="0" data-duration="14" data-track-index="0"></div>
+  <div class="f2-stage clip" id="f2-stage" data-start="0" data-duration="14" data-track-index="1">
+
+  <div class="f2-title"><span class="f2-dots"><i></i><i></i><i></i></span>adapter-importador-transacoes<span class="f2-step">Passo 1 · OFX</span></div>
+  <aside class="f2-side"><div class="f2-sh">Explorador</div><div class="f2-proj">▾ ADAPTER-IMPORTADOR-TRANSACOES</div><div class="f2-tree" id="f2-tree"><div class="f2-xr" id="f2-x-data" style="top:0px;padding-left:22px"><i class="f2-xi f2-xi-d">▾</i>data</div><div class="f2-xr" id="f2-x-data-extrato-csv" style="top:36px;padding-left:44px"><i class="f2-xi f2-xi-f">≡</i>extrato.csv</div><div class="f2-xr" id="f2-x-data-extrato-ofx" style="top:72px;padding-left:44px"><i class="f2-xi f2-xi-f">≡</i>extrato.ofx</div><div class="f2-xr" id="f2-x-data-extrato-xlsx" style="top:108px;padding-left:44px"><i class="f2-xi f2-xi-f">≡</i>extrato.xlsx</div><div class="f2-xr" id="f2-x-src" style="top:144px;padding-left:22px"><i class="f2-xi f2-xi-d">▾</i>src</div><div class="f2-xr" id="f2-x-src-adapters" style="top:180px;padding-left:44px"><i class="f2-xi f2-xi-d">▾</i>adapters</div><div class="f2-xr" id="f2-x-src-adapters-csv-adapter-ts" style="top:216px;padding-left:66px;opacity:0"><i class="f2-xi f2-xi-ts">TS</i>csv.adapter.ts</div><div class="f2-xr" id="f2-x-src-adapters-excel-adapter-ts" style="top:216px;padding-left:66px"><i class="f2-xi f2-xi-ts">TS</i>excel.adapter.ts</div><div class="f2-xr" id="f2-x-src-adapters-ofx-adapter-ts" style="top:252px;padding-left:66px"><i class="f2-xi f2-xi-ts">TS</i>ofx.adapter.ts</div><div class="f2-xr" id="f2-x-src-adapter-resolver-ts" style="top:288px;padding-left:44px"><i class="f2-xi f2-xi-ts">TS</i>adapter-resolver.ts</div><div class="f2-xr" id="f2-x-src-comparar-ts" style="top:324px;padding-left:44px"><i class="f2-xi f2-xi-ts">TS</i>comparar.ts</div><div class="f2-xr" id="f2-x-src-import-file-ts" style="top:360px;padding-left:44px"><i class="f2-xi f2-xi-ts">TS</i>import-file.ts</div><div class="f2-xr" id="f2-x-src-main-ts" style="top:396px;padding-left:44px"><i class="f2-xi f2-xi-ts">TS</i>main.ts</div><div class="f2-xr" id="f2-x-src-transaction-file-adapter-ts" style="top:432px;padding-left:44px"><i class="f2-xi f2-xi-ts">TS</i>transaction-file-adapter.ts</div><div class="f2-xr" id="f2-x-src-transaction-import-service-ts" style="top:468px;padding-left:44px"><i class="f2-xi f2-xi-ts">TS</i>transaction-import-service.ts</div><div class="f2-xr" id="f2-x-src-transaction-ts" style="top:504px;padding-left:44px"><i class="f2-xi f2-xi-ts">TS</i>transaction.ts</div><div class="f2-xr" id="f2-x-package-json" style="top:540px;padding-left:22px"><i class="f2-xi f2-xi-f">{}</i>package.json</div></div></aside>
+  <div class="f2-tabs" id="f2-tab"><span class="f2-tab"><i>TS</i>transaction-file-adapter.ts</span><span class="f2-tab on"><i>TS</i>ofx.adapter.ts</span></div>
+  <div class="f2-ed" id="f2-e"><div class="f2-scroll" id="f2-e-sc"><i class="f2-band" id="f2-e-band"></i><div class="f2-row" id="f2-e-r0"><span class="f2-no">1</span><span class="f2-tx" id="f2-e-t0" style="--n:53"><span class="f2-k">import</span> <span class="f2-k">type</span> { <span class="f2-t">Transaction</span> } <span class="f2-k">from</span> <span class="f2-s">"../transaction.ts"</span>;</span></div><div class="f2-row" id="f2-e-r1"><span class="f2-no">2</span><span class="f2-tx" id="f2-e-t1" style="--n:77"><span class="f2-k">import</span> <span class="f2-k">type</span> { <span class="f2-t">TransactionFileAdapter</span> } <span class="f2-k">from</span> <span class="f2-s">"../transaction-file-adapter.ts"</span>;</span></div><div class="f2-row" id="f2-e-r2"><span class="f2-no">3</span><span class="f2-tx" id="f2-e-t2" style="--n:0"></span></div><div class="f2-row" id="f2-e-r3"><span class="f2-no">4</span><span class="f2-tx" id="f2-e-t3" style="--n:59"><span class="f2-k">export</span> <span class="f2-k">class</span> <span class="f2-t">OfxAdapter</span> <span class="f2-k">implements</span> <span class="f2-t">TransactionFileAdapter</span> {</span></div><div class="f2-row" id="f2-e-r4"><span class="f2-no">5</span><span class="f2-tx" id="f2-e-t4" style="--n:56">  <span class="f2-k">async</span> parse(content: <span class="f2-t">Buffer</span>): <span class="f2-t">Promise</span>&lt;<span class="f2-t">Transaction</span>[]&gt; {</span></div><div class="f2-row" id="f2-e-r5"><span class="f2-no">6</span><span class="f2-tx" id="f2-e-t5" style="--n:66">    <span class="f2-k">const</span> blocks = content.toString().split(<span class="f2-s">"&lt;STMTTRN&gt;"</span>).slice(<span class="f2-n">1</span>);</span></div><div class="f2-row" id="f2-e-r6"><span class="f2-no">7</span><span class="f2-tx" id="f2-e-t6" style="--n:34">    <span class="f2-k">return</span> blocks.map((block) =&gt; {</span></div><div class="f2-row" id="f2-e-r7"><span class="f2-no">8</span><span class="f2-tx" id="f2-e-t7" style="--n:97">      <span class="f2-k">const</span> tag = (name: <span class="f2-t">string</span>) =&gt; block.match(<span class="f2-k">new</span> <span class="f2-t">RegExp</span>(<span class="f2-s">`&lt;${name}&gt;([^&lt;\\r\\n]+)`</span>))![<span class="f2-n">1</span>].trim();</span></div><div class="f2-row" id="f2-e-r8"><span class="f2-no">9</span><span class="f2-tx" id="f2-e-t8" style="--n:42">      <span class="f2-k">const</span> value = <span class="f2-t">Number</span>(tag(<span class="f2-s">"TRNAMT"</span>));</span></div><div class="f2-row" id="f2-e-r9"><span class="f2-no">10</span><span class="f2-tx" id="f2-e-t9" style="--n:32">      <span class="f2-k">const</span> d = tag(<span class="f2-s">"DTPOSTED"</span>);</span></div><div class="f2-row" id="f2-e-r10"><span class="f2-no">11</span><span class="f2-tx" id="f2-e-t10" style="--n:14">      <span class="f2-k">return</span> {</span></div><div class="f2-row" id="f2-e-r11"><span class="f2-no">12</span><span class="f2-tx" id="f2-e-t11" style="--n:67">        date: <span class="f2-s">`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`</span>,</span></div><div class="f2-row" id="f2-e-r12"><span class="f2-no">13</span><span class="f2-tx" id="f2-e-t12" style="--n:33">        description: tag(<span class="f2-s">"MEMO"</span>),</span></div><div class="f2-row" id="f2-e-r13"><span class="f2-no">14</span><span class="f2-tx" id="f2-e-t13" style="--n:32">        amount: <span class="f2-t">Math</span>.abs(value),</span></div><div class="f2-row" id="f2-e-r14"><span class="f2-no">15</span><span class="f2-tx" id="f2-e-t14" style="--n:45">        <span class="f2-k">type</span>: value &lt; <span class="f2-n">0</span> ? <span class="f2-s">"DEBIT"</span> : <span class="f2-s">"CREDIT"</span>,</span></div><div class="f2-row" id="f2-e-r15"><span class="f2-no">16</span><span class="f2-tx" id="f2-e-t15" style="--n:8">      };</span></div><div class="f2-row" id="f2-e-r16"><span class="f2-no">17</span><span class="f2-tx" id="f2-e-t16" style="--n:7">    });</span></div><div class="f2-row" id="f2-e-r17"><span class="f2-no">18</span><span class="f2-tx" id="f2-e-t17" style="--n:3">  }</span></div><div class="f2-row" id="f2-e-r18"><span class="f2-no">19</span><span class="f2-tx" id="f2-e-t18" style="--n:1">}</span></div></div></div><section class="f2-term" id="f2-term"><div class="f2-th"><span class="on">Terminal</span><span>Problemas</span><span>Saída</span></div><div class="f2-tb"><div class="f2-tsc" id="f2-tsc" data-layout-allow-overflow><div class="f2-tl" id="f2b-c"><span class="f2-pr">~/codigo $ </span><span class="f2-ty" id="f2b-ty" style="--n:33">npm run importar data/extrato.ofx</span></div><div class="f2-tl f2b-o" id="f2b-o0"><span class="f2-dim">&gt; importar</span></div><div class="f2-tl f2b-o" id="f2b-o1"><span class="f2-dim">&gt; tsx src/main.ts data/extrato.ofx</span></div><div class="f2-tl f2b-o" id="f2b-o2">&nbsp;</div><div class="f2-tl f2b-o" id="f2b-o3">[</div><div class="f2-tl f2b-o" id="f2b-o4">  {</div><div class="f2-tl f2b-o" id="f2b-o5">    date: <span class="f2-s">'2026-10-05'</span>,</div><div class="f2-tl f2b-o" id="f2b-o6">    description: <span class="f2-s">'Pagamento fornecedor'</span>,</div><div class="f2-tl f2b-o" id="f2b-o7">    amount: <span class="f2-n">150</span>,</div><div class="f2-tl f2b-o" id="f2b-o8">    type: <span class="f2-s">'DEBIT'</span></div><div class="f2-tl f2b-o" id="f2b-o9">  }</div><div class="f2-tl f2b-o" id="f2b-o10">]</div></div></div></section>
+  <div class="f2-status"><span>⎇ main</span><span>TypeScript</span><span>UTF-8</span><b id="f2-sr">ofx.adapter.ts</b></div>
+  </div>
+</div>
+<script>
+(function () {
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+  const E = "power3.out";
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  // digita: largura em ch, em degraus (determinístico)
+  const type = (id, at, dur, row) => {
+    const el = $(id);
+    if (row) { gsap.set(el.parentNode, { opacity: 0 }); tl.set(el.parentNode, { opacity: 1 }, at); }
+    const n = Math.max(1, +getComputedStyle(el).getPropertyValue("--n"));
+    tl.fromTo(el, { width: "0ch" }, { width: n + "ch", duration: dur, ease: "steps(" + n + ")" }, at);
+  };
+  // mostra um arquivo inteiro de uma vez, linha a linha (como ao abrir)
+  const open = (eid, at) => tl.fromTo($$(eid + " ." + "f2-row"), { opacity: 0 }, { opacity: 1, duration: 0.18, stagger: 0.025, ease: "power1.out" }, at);
+  // faixa de destaque na linha i (0-based) do editor eid
+  const band = (eid, i, at, n = 1) => {
+    tl.set(eid + "-band", { top: 18 + i * 38, height: n * 38 }, at);
+    tl.fromTo(eid + "-band", { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.4, ease: "power2.inOut" }, at);
+  };
+  const termUp = (at) => tl.fromTo("#f2-term", { y: 516 }, { y: 0, duration: 0.6, ease: E }, at);
+  const termDown = (at) => tl.to("#f2-term", { y: 516, duration: 0.5, ease: "power2.in" }, at);
+  const scroll = (eid, lines, at) => tl.to(eid + "-sc", { y: -lines * 38, duration: 0.6, ease: E }, at);
+  const output = (bid, at) => tl.fromTo("." + bid + "-o", { opacity: 0 }, { opacity: 1, duration: 0.05, stagger: 0.035 }, at);
+  const cut = (hide, show, at) => { if (hide) tl.set(hide, { opacity: 0 }, at); tl.set(show, { opacity: 1 }, at); };
+
+  gsap.set("#f2-x-src-adapters-ofx-adapter-ts", { className: "f2-xr on" });
+  gsap.set("#f2-term", { y: 516 });
+  open("#f2-e", 0.2);
+  band("#f2-e", 3, 1.3);
+  band("#f2-e", 11, 3.2); band("#f2-e", 12, 4.0); band("#f2-e", 13, 4.8); band("#f2-e", 14, 5.6);
+  termUp(6.8999999999999995);
+  scroll("#f2-e", 5, 6.8999999999999995);
+  type("#f2b-ty", 7.6, 0.99);
+  output("f2b", 9.29);
+
+  tl.set({}, {}, 14);
+  window.__timelines["02-ofx"] = tl;
+})();
+</script>
+</template>

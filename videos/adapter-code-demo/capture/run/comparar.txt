@@ -1,0 +1,17 @@
+
+> comparar
+> tsx src/comparar.ts
+
+OFX:   {
+  date: '2026-10-05',
+  description: 'Pagamento fornecedor',
+  amount: 150,
+  type: 'DEBIT'
+}
+Excel: {
+  date: '2026-10-05',
+  description: 'Pagamento fornecedor',
+  amount: 150,
+  type: 'DEBIT'
+}
+✓ mesmo objeto Transaction

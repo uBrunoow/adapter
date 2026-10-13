@@ -1,0 +1,12 @@
+
+> importar
+> tsx src/main.ts data/extrato.csv
+
+[
+  {
+    date: '2026-10-05',
+    description: 'Pagamento fornecedor',
+    amount: 150,
+    type: 'DEBIT'
+  }
+]

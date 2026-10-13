@@ -1,0 +1,5 @@
+
+> importar
+> tsx src/main.ts data/extrato.csv
+
+✗ Formato não suportado: .csv
